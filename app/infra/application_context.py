@@ -86,7 +86,7 @@ class InMemoryOauthApplicationContext(IApplicationContext):
         encoded_jwt = jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
         return str(encoded_jwt)
 
-    async def get_current_user(
+    def get_current_user(
         self, token: Any = Annotated[str, Depends(oauth2_scheme)]
     ) -> Account:
         credentials_exception = HTTPException(

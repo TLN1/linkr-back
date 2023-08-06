@@ -4,6 +4,7 @@ import uvicorn
 from fastapi import Depends, FastAPI, HTTPException, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.application_context import IApplicationContext
 from app.core.constants import STATUS_HTTP_MAPPING
@@ -52,6 +53,22 @@ from app.infra.repository.company import InMemoryCompanyRepository
 from app.infra.repository.user import InMemoryUserRepository
 
 app = FastAPI()
+
+
+origins = [
+    "http://localhost",
+    "http://localhost:8080",
+    "http://localhost:19006",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
@@ -108,7 +125,7 @@ async def read_users_me(
     token: Annotated[str, Depends(oauth2_scheme)],
     application_context: IApplicationContext = Depends(get_application_context),
 ) -> Account:
-    return await application_context.get_current_user(token)
+    return application_context.get_current_user(token)
 
 
 @app.post("/token", response_model=Token)
@@ -132,14 +149,18 @@ async def login_for_access_token(
     response_model=Account,
 )
 def register(
-    response: Response, username: str, password: str, core: Core = Depends(get_core)
+    response: Response,
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    core: Core = Depends(get_core),
 ) -> BaseModel:
     """
     - Registers user
     - Returns token for subsequent requests
     """
 
-    account_response = core.register(RegisterRequest(username, password))
+    account_response = core.register(
+        RegisterRequest(form_data.username, form_data.password)
+    )
     handle_response_status_code(response, account_response)
     return account_response.response_content
 
@@ -173,7 +194,7 @@ async def update_user(
     core: Core = Depends(get_core),
     application_context: IApplicationContext = Depends(get_application_context),
 ) -> BaseModel:
-    account = await application_context.get_current_user(token=token)
+    account = application_context.get_current_user(token=token)
 
     setup_user_response = core.update_user(
         SetupUserRequest(
@@ -208,7 +229,7 @@ async def create_application(
     - Returns application id for subsequent requests
     """
 
-    account = await application_context.get_current_user(token)
+    account = application_context.get_current_user(token)
 
     create_application_response = core.create_application(
         CreateApplicationRequest(
@@ -236,7 +257,7 @@ async def get_application(
     """
     - Obtains application with application id
     """
-    account = await application_context.get_current_user(token)
+    account = application_context.get_current_user(token)
 
     get_application_response = core.get_application(
         GetApplicationRequest(account=account, id=application_id)
@@ -262,7 +283,7 @@ async def update_application(
     """
     - Update application
     """
-    account = await application_context.get_current_user(token)
+    account = application_context.get_current_user(token)
 
     update_application_response = core.update_application(
         UpdateApplicationRequest(
@@ -291,7 +312,7 @@ async def application_interaction(
     """
     - Saves interaction with application
     """
-    account = await application_context.get_current_user(token)
+    account = application_context.get_current_user(token)
 
     application_interaction_response = core.application_interaction(
         ApplicationInteractionRequest(id=application_id, account=account)
@@ -312,7 +333,7 @@ async def delete_application(
     """
     - Deletes application
     """
-    account = await application_context.get_current_user(token)
+    account = application_context.get_current_user(token)
     delete_application_response = core.delete_application(
         DeleteApplicationRequest(account=account, id=application_id)
     )
