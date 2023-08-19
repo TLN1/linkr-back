@@ -1,4 +1,4 @@
-from typing import Optional, Protocol
+from typing import Protocol
 
 from app.core.models import (
     Application,
@@ -18,10 +18,10 @@ class IApplicationRepository(Protocol):
         experience_level: ExperienceLevel,
         requirements: list[Requirement],
         benefits: list[Benefit],
-    ) -> Optional[Application]:
+    ) -> Application | None:
         pass
 
-    def get_application(self, id: int) -> Optional[Application]:
+    def get_application(self, id: int) -> Application | None:
         pass
 
     def has_application(self, id: int) -> bool:
@@ -35,7 +35,7 @@ class IApplicationRepository(Protocol):
         experience_level: ExperienceLevel,
         requirements: list[Requirement],
         benefits: list[Benefit],
-    ) -> bool:
+    ) -> Application | None:
         pass
 
     def application_interaction(self, id: int) -> bool:

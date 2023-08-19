@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 from app.core.constants import Status
 from app.core.models import (
@@ -11,7 +10,7 @@ from app.core.models import (
     JobType,
     Requirement,
 )
-from app.core.repository.application_repository import IApplicationRepository
+from app.core.repository.application import IApplicationRepository
 
 
 # TODO: application is posted by logged in account for update, delete
@@ -27,7 +26,7 @@ class ApplicationService:
         experience_level: ExperienceLevel,
         requirements: list[Requirement],
         benefits: list[Benefit],
-    ) -> tuple[Status, Optional[int]]:
+    ) -> tuple[Status, Application | None]:
         application = self.application_repository.create_application(
             location=location,
             job_type=job_type,
@@ -39,9 +38,9 @@ class ApplicationService:
         if application is None:
             return Status.APPLICATION_CREATE_ERROR, None
 
-        return Status.OK, application.id
+        return Status.OK, application
 
-    def get_application(self, id: int) -> tuple[Status, Optional[Application]]:
+    def get_application(self, id: int) -> tuple[Status, Application | None]:
         application = self.application_repository.get_application(id=id)
         if application is None:
             return Status.APPLICATION_DOES_NOT_EXIST, None
@@ -57,21 +56,23 @@ class ApplicationService:
         experience_level: ExperienceLevel,
         requirements: list[Requirement],
         benefits: list[Benefit],
-    ) -> Status:
+    ) -> tuple[Status, Application | None]:
         if not self.application_repository.has_application(id=id):
-            return Status.APPLICATION_DOES_NOT_EXIST
+            return Status.APPLICATION_DOES_NOT_EXIST, None
 
-        if not self.application_repository.update_application(
+        application = self.application_repository.update_application(
             id=id,
             location=location,
             job_type=job_type,
             experience_level=experience_level,
             requirements=requirements,
             benefits=benefits,
-        ):
-            return Status.APPLICATION_UPDATE_ERROR
+        )
 
-        return Status.OK
+        if application is None:
+            return Status.APPLICATION_UPDATE_ERROR, None
+
+        return Status.OK, application
 
     def application_interaction(self, account: Account, id: int) -> Status:
         if not self.application_repository.has_application(id=id):

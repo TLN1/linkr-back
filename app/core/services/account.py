@@ -1,9 +1,9 @@
 from dataclasses import dataclass
-from typing import Callable, Optional
+from typing import Callable
 
 from app.core.constants import Status
-from app.core.models import Account, Company
-from app.core.repository.account_repository import IAccountRepository
+from app.core.models import Account, Application, Company
+from app.core.repository.account import IAccountRepository
 
 
 @dataclass
@@ -11,9 +11,7 @@ class AccountService:
     account_repository: IAccountRepository
     hash_function: Callable[[str], str]
 
-    def register(
-        self, username: str, password: str
-    ) -> tuple[Status, Optional[Account]]:
+    def register(self, username: str, password: str) -> tuple[Status, Account | None]:
         if self.account_repository.has_account(username=username):
             return Status.ACCOUNT_ALREADY_EXISTS, None
 
@@ -30,5 +28,13 @@ class AccountService:
             username=account.username, company=company
         ):
             return Status.ERROR_CREATING_COMPANY
+
+        return Status.OK
+
+    def link_application(self, account: Account, application: Application) -> Status:
+        if not self.account_repository.link_application(
+            username=account.username, application=application
+        ):
+            return Status.APPLICATION_CREATE_ERROR
 
         return Status.OK

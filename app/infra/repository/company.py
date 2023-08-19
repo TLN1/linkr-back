@@ -1,15 +1,14 @@
 from dataclasses import dataclass, field
-from typing import Optional
 
-from app.core.models import Company, Industry, OrganizationSize
-from app.core.repository.company_repository import ICompanyRepository
+from app.core.models import Application, Company, Industry, OrganizationSize
+from app.core.repository.company import ICompanyRepository
 
 
 @dataclass
 class InMemoryCompanyRepository(ICompanyRepository):
     companies: list[Company] = field(default_factory=list)
 
-    def get_company(self, company_id: int) -> Optional[Company]:
+    def get_company(self, company_id: int) -> Company | None:
         for company in self.companies:
             if company.id == company_id:
                 return company
@@ -21,7 +20,7 @@ class InMemoryCompanyRepository(ICompanyRepository):
         website: str,
         industry: Industry,
         organization_size: OrganizationSize,
-    ) -> Optional[Company]:
+    ) -> Company | None:
         self.companies.append(
             Company(
                 id=len(self.companies),
@@ -40,7 +39,7 @@ class InMemoryCompanyRepository(ICompanyRepository):
         website: str,
         industry: Industry,
         organization_size: OrganizationSize,
-    ) -> Optional[Company]:
+    ) -> Company | None:
         for company in self.companies:
             if company.id == company_id:
                 company.name = name
@@ -59,5 +58,13 @@ class InMemoryCompanyRepository(ICompanyRepository):
         if company_to_delete is not None:
             self.companies.remove(company_to_delete)
             return True
+
+        return False
+
+    def link_application(self, company_id: int, application: Application) -> bool:
+        for company in self.companies:
+            if company.id == company_id:
+                company.link_application(application)
+                return True
 
         return False

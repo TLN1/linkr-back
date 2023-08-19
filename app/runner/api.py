@@ -37,17 +37,17 @@ from app.core.requests import (
     UpdateApplicationRequest,
 )
 from app.core.responses import CoreResponse
-from app.core.services.account_service import AccountService
-from app.core.services.application_service import ApplicationService
-from app.core.services.company_service import CompanyService
-from app.core.services.user_service import UserService
+from app.core.services.account import AccountService
+from app.core.services.application import ApplicationService
+from app.core.services.company import CompanyService
+from app.core.services.user import UserService
 from app.infra.application_context import (
     InMemoryApplicationContext,
     InMemoryOauthApplicationContext,
 )
 from app.infra.auth_utils import oauth2_scheme, pwd_context
-from app.infra.repository.account_repository import InMemoryAccountRepository
-from app.infra.repository.application_repository import InMemoryApplicationRepository
+from app.infra.repository.account import InMemoryAccountRepository
+from app.infra.repository.application import InMemoryApplicationRepository
 from app.infra.repository.company import InMemoryCompanyRepository
 from app.infra.repository.user import InMemoryUserRepository
 
@@ -154,7 +154,10 @@ def register(
 
 @app.get("/user/{username}", response_model=User)
 def get_user(
-    response: Response, username: str, core: Core = Depends(get_core)
+    token: Annotated[str, Depends(oauth2_scheme)],
+    response: Response,
+    username: str,
+    core: Core = Depends(get_core),
 ) -> BaseModel:
     get_user_response = core.get_user(username=username)
     handle_response_status_code(response, get_user_response)
@@ -191,7 +194,7 @@ async def update_user(
     return setup_user_response.response_content
 
 
-@app.post("/application/create", response_model=ApplicationId)
+@app.post("/application", response_model=ApplicationId)
 async def create_application(
     response: Response,
     location: JobLocation,
@@ -199,6 +202,7 @@ async def create_application(
     experience_level: ExperienceLevel,
     requirements: list[Requirement],
     benefits: list[Benefit],
+    company_id: int,
     token: Annotated[str, Depends(oauth2_scheme)],
     core: Core = Depends(get_core),
     application_context: IApplicationContext = Depends(get_application_context),
@@ -207,7 +211,6 @@ async def create_application(
     - Creates application
     - Returns application id for subsequent requests
     """
-
     account = await application_context.get_current_user(token)
 
     create_application_response = core.create_application(
@@ -218,6 +221,7 @@ async def create_application(
             experience_level=experience_level,
             requirements=requirements,
             benefits=benefits,
+            company_id=company_id,
         )
     )
 
@@ -225,7 +229,7 @@ async def create_application(
     return create_application_response.response_content
 
 
-@app.get("/application/get/{application_id}", response_model=Application)
+@app.get("/application/{application_id}", response_model=Application)
 async def get_application(
     response: Response,
     application_id: int,
@@ -246,7 +250,7 @@ async def get_application(
     return get_application_response.response_content
 
 
-@app.put("/application/update/{application_id}")
+@app.put("/application/{application_id}/update")
 async def update_application(
     response: Response,
     application_id: int,
@@ -280,7 +284,7 @@ async def update_application(
     return update_application_response.response_content
 
 
-@app.put("/application/interaction/{application_id}")
+@app.put("/application/{application_id}/interaction")
 async def application_interaction(
     response: Response,
     application_id: int,
@@ -301,7 +305,7 @@ async def application_interaction(
     return application_interaction_response.response_content
 
 
-@app.delete("/application/delete/{application_id}")
+@app.delete("/application/{application_id}")
 async def delete_application(
     response: Response,
     application_id: int,
@@ -367,6 +371,7 @@ async def create_company(
 async def get_company(
     response: Response,
     company_id: int,
+    token: Annotated[str, Depends(oauth2_scheme)],
     core: Core = Depends(get_core),
 ) -> BaseModel:
     company_response = core.get_company(company_id=company_id)

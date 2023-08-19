@@ -7,7 +7,7 @@ from jose import JWTError, jwt
 
 from app.core.application_context import IApplicationContext
 from app.core.models import Account, TokenData
-from app.core.repository.account_repository import IAccountRepository
+from app.core.repository.account import IAccountRepository
 from app.infra.auth_utils import oauth2_scheme
 
 

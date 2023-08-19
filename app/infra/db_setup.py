@@ -4,14 +4,13 @@ import sqlite3
 from dataclasses import dataclass, field
 from pathlib import Path
 from sqlite3 import Connection, Cursor
-from typing import Optional
 
 DB_PATH = Path("..").joinpath("app.db")
 
 
 @dataclass
 class ConnectionProvider:
-    _connection: Optional[Connection] = field(default=None, init=False)
+    _connection: Connection | None = field(default=None, init=False)
 
     @classmethod
     def get_connection(cls) -> Connection:

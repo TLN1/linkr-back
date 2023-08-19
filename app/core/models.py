@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from enum import Enum
 
 from pydantic import BaseModel, Field
@@ -41,6 +43,10 @@ class Company(BaseModel):
     website: str
     industry: Industry
     organization_size: OrganizationSize
+    applications: list[int] = Field(default_factory=list)
+
+    def link_application(self, application: Application) -> None:
+        self.applications.append(application.id)
 
 
 class Preference(BaseModel):
@@ -90,9 +96,13 @@ class Account(BaseModel):
     username: str
     password: str
     companies: list[int] = Field(default_factory=list)
+    applications: list[int] = Field(default_factory=list)
 
     def link_company(self, company: Company) -> None:
         self.companies.append(company.id)
+
+    def link_application(self, application: Application) -> None:
+        self.applications.append(application.id)
 
 
 class Requirement(BaseModel):
