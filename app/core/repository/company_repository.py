@@ -4,7 +4,7 @@ from app.core.models import Company, Industry, OrganizationSize
 
 
 class ICompanyRepository(Protocol):
-    def get_company(self, company_id: int) -> Optional[Company]:
+    def get_company(self, company_id: int) -> Company | None:
         pass
 
     def create_company(
@@ -13,7 +13,11 @@ class ICompanyRepository(Protocol):
         website: str,
         industry: Industry,
         organization_size: OrganizationSize,
-    ) -> Optional[Company]:
+        image: bytes,
+        image_type: str,
+        cover_image: bytes,
+        cover_image_type: str,
+    ) -> Company | None:
         pass
 
     def update_company(
@@ -23,6 +27,10 @@ class ICompanyRepository(Protocol):
         website: str,
         industry: Industry,
         organization_size: OrganizationSize,
+        image: bytes,
+        image_type: str,
+        cover_image: bytes,
+        cover_image_type: str,
     ) -> Optional[Company]:
         pass
 

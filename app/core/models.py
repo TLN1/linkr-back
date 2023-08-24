@@ -7,10 +7,16 @@ from pydantic import BaseModel, Field
 class Industry(Enum):
     SOFTWARE_ENGINEERING = "Software Engineering"
 
+    def __str__(self) -> str:
+        return self.value
+
 
 # TODO: ADD VALUES
 class OrganizationSize(Enum):
     SMALL = "1-10 employees"
+
+    def __str__(self) -> str:
+        return self.value
 
 
 class JobLocation(Enum):
@@ -41,6 +47,10 @@ class Company(BaseModel):
     website: str
     industry: Industry
     organization_size: OrganizationSize
+    image: bytes
+    image_type: str
+    cover_image: bytes
+    cover_image_type: str
 
 
 class Preference(BaseModel):

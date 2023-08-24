@@ -33,7 +33,7 @@ class InMemoryApplicationContext(IApplicationContext):
         self.active_accounts[token] = account.username
         return token
 
-    async def get_current_user(self, token: Any) -> Account:
+    def get_current_user(self, token: Any) -> Account:
         unauthorized_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authorized",

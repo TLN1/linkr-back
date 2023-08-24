@@ -1,10 +1,10 @@
 from typing import Annotated
 
 import uvicorn
-from fastapi import Depends, FastAPI, HTTPException, Response
+from fastapi import Depends, FastAPI, HTTPException, Response, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
-from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.application_context import IApplicationContext
 from app.core.constants import STATUS_HTTP_MAPPING
@@ -47,9 +47,10 @@ from app.infra.application_context import (
     InMemoryOauthApplicationContext,
 )
 from app.infra.auth_utils import oauth2_scheme, pwd_context
+from app.infra.db_setup import ConnectionProvider
 from app.infra.repository.account_repository import InMemoryAccountRepository
 from app.infra.repository.application_repository import InMemoryApplicationRepository
-from app.infra.repository.company import InMemoryCompanyRepository
+from app.infra.repository.company import SqliteCompanyRepository
 from app.infra.repository.user import InMemoryUserRepository
 
 app = FastAPI()
@@ -79,7 +80,9 @@ in_memory_user_repository = InMemoryUserRepository()
 in_memory_application_context = InMemoryApplicationContext(
     account_repository=in_memory_account_repository, hash_verifier=pwd_context.verify
 )
-in_memory_company_repository = InMemoryCompanyRepository()
+in_memory_company_repository = SqliteCompanyRepository(
+    connection=ConnectionProvider.get_connection()
+)
 in_memory_oauth_application_context = InMemoryOauthApplicationContext(
     account_repository=in_memory_account_repository, hash_verifier=pwd_context.verify
 )
@@ -342,6 +345,16 @@ async def delete_application(
     return delete_application_response.response_content
 
 
+@app.get("/industry", responses={200: {}})
+def get_industries() -> list[str]:
+    return [e.value for e in Industry]
+
+
+@app.get("/organization-size", responses={200: {}})
+def get_organization_sizes() -> list[str]:
+    return [e.value for e in OrganizationSize]
+
+
 @app.post(
     "/company",
     responses={
@@ -351,12 +364,14 @@ async def delete_application(
     },
     response_model=Company,
 )
-async def create_company(
+def create_company(
     response: Response,
     name: str,
     website: str,
     industry: Industry,
     organization_size: OrganizationSize,
+    image: UploadFile,
+    cover_image: UploadFile,
     token: Annotated[str, Depends(oauth2_scheme)],
     application_context: IApplicationContext = Depends(get_application_context),
     core: Core = Depends(get_core),
@@ -365,13 +380,15 @@ async def create_company(
     - Registers company
     - Returns created company
     """
-    account = await application_context.get_current_user(token=token)
+    account = application_context.get_current_user(token=token)
     company_response = core.create_company(
         account=account,
         name=name,
         website=website,
         industry=industry,
         organization_size=organization_size,
+        image=image,
+        cover_image=cover_image,
     )
     handle_response_status_code(response, company_response)
     return company_response.response_content
@@ -385,7 +402,7 @@ async def create_company(
     },
     response_model=Company,
 )
-async def get_company(
+def get_company(
     response: Response,
     company_id: int,
     core: Core = Depends(get_core),
@@ -404,18 +421,20 @@ async def get_company(
     },
     response_model=Company,
 )
-async def update_company(
+def update_company(
     response: Response,
     company_id: int,
     name: str,
     website: str,
     industry: Industry,
     organization_size: OrganizationSize,
+    image: UploadFile,
+    cover_image: UploadFile,
     token: Annotated[str, Depends(oauth2_scheme)],
     application_context: IApplicationContext = Depends(get_application_context),
     core: Core = Depends(get_core),
 ) -> BaseModel:
-    account = await application_context.get_current_user(token)
+    account = application_context.get_current_user(token)
 
     company_response = core.update_company(
         account=account,
@@ -424,6 +443,8 @@ async def update_company(
         website=website,
         industry=industry,
         organization_size=organization_size,
+        image=image,
+        cover_image=cover_image,
     )
     handle_response_status_code(response, company_response)
 
@@ -434,13 +455,27 @@ async def update_company(
     "/company/{company_id}",
     responses={200: {}, 404: {}, 500: {}},
 )
-async def delete_company(
+def delete_company(
     response: Response,
     company_id: int,
     token: Annotated[str, Depends(oauth2_scheme)],
     application_context: IApplicationContext = Depends(get_application_context),
     core: Core = Depends(get_core),
 ) -> None:
-    account = await application_context.get_current_user(token)
+    account = application_context.get_current_user(token)
     delete_response = core.delete_company(account=account, company_id=company_id)
     handle_response_status_code(response, delete_response)
+
+
+# FOR TESTING FILE UPLOADS
+# @app.post(
+#     "/test/images",
+#     responses={200: {}, 404: {}, 500: {}},
+# )
+# def print_image_type(response: Response, image: UploadFile):
+#     base_encoded = base64.b64encode(image.file.read())
+#     print(base_encoded)
+#     encoded_string = base_encoded.decode()
+#     print(encoded_string)
+#
+#     return encoded_string
