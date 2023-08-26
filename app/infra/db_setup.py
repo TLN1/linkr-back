@@ -35,7 +35,7 @@ def create_tables(cursor: Cursor, connection: Connection) -> None:
         "CREATE TABLE IF NOT EXISTS company "
         "(id INTEGER PRIMARY KEY, company_name TEXT, "
         "website TEXT, industry TEXT, organization_size INT, "
-        "image BLOB, image_type TEXT, cover_image BLOB, cover_image_type TEXT);"
+        "image_uri TEXT, cover_image_uri TEXT);"
     )
 
     connection.commit()

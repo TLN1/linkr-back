@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 
-from fastapi import UploadFile
 from pydantic import BaseModel
 
 from app.core.constants import Status
@@ -117,16 +116,16 @@ class Core:
         website: str,
         industry: Industry,
         organization_size: OrganizationSize,
-        image: UploadFile,
-        cover_image: UploadFile,
+        image_uri: str,
+        cover_image_uri: str,
     ) -> CoreResponse:
         status, company = self.company_service.create_company(
             name=name,
             website=website,
             industry=industry,
             organization_size=organization_size,
-            image=image,
-            cover_image=cover_image,
+            image_uri=image_uri,
+            cover_image_uri=cover_image_uri,
         )
 
         if company is None:
@@ -152,15 +151,9 @@ class Core:
         website: str,
         industry: Industry,
         organization_size: OrganizationSize,
-        image: UploadFile,
-        cover_image: UploadFile,
+        image_uri: str,
+        cover_image_uri: str,
     ) -> CoreResponse:
-        if image.content_type not in ["image/jpeg", "image/png"]:
-            return CoreResponse(status=Status.UNSUPPORTED_IMAGE_FORMAT)
-
-        if cover_image.content_type not in ["image/jpeg", "image/png"]:
-            return CoreResponse(status=Status.UNSUPPORTED_IMAGE_FORMAT)
-
         status, company = self.company_service.update_company(
             account=account,
             company_id=company_id,
@@ -168,8 +161,8 @@ class Core:
             website=website,
             industry=industry,
             organization_size=organization_size,
-            image=image,
-            cover_image=cover_image,
+            image_uri=image_uri,
+            cover_image_uri=cover_image_uri,
         )
         if company is None:
             return CoreResponse(status=status)

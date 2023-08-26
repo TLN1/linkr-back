@@ -1,7 +1,7 @@
 from typing import Annotated
 
 import uvicorn
-from fastapi import Depends, FastAPI, HTTPException, Response, UploadFile
+from fastapi import Depends, FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
@@ -31,6 +31,7 @@ from app.core.models import (
 from app.core.requests import (
     ApplicationInteractionRequest,
     CreateApplicationRequest,
+    CreateCompanyRequest,
     DeleteApplicationRequest,
     GetApplicationRequest,
     RegisterRequest,
@@ -366,12 +367,7 @@ def get_organization_sizes() -> list[str]:
 )
 def create_company(
     response: Response,
-    name: str,
-    website: str,
-    industry: Industry,
-    organization_size: OrganizationSize,
-    image: UploadFile,
-    cover_image: UploadFile,
+    request: CreateCompanyRequest,
     token: Annotated[str, Depends(oauth2_scheme)],
     application_context: IApplicationContext = Depends(get_application_context),
     core: Core = Depends(get_core),
@@ -383,12 +379,12 @@ def create_company(
     account = application_context.get_current_user(token=token)
     company_response = core.create_company(
         account=account,
-        name=name,
-        website=website,
-        industry=industry,
-        organization_size=organization_size,
-        image=image,
-        cover_image=cover_image,
+        name=request.name,
+        website=request.website,
+        industry=request.industry,
+        organization_size=request.organization_size,
+        image_uri=request.image_uri,
+        cover_image_uri=request.cover_image_uri,
     )
     handle_response_status_code(response, company_response)
     return company_response.response_content
@@ -424,12 +420,7 @@ def get_company(
 def update_company(
     response: Response,
     company_id: int,
-    name: str,
-    website: str,
-    industry: Industry,
-    organization_size: OrganizationSize,
-    image: UploadFile,
-    cover_image: UploadFile,
+    request: CreateCompanyRequest,
     token: Annotated[str, Depends(oauth2_scheme)],
     application_context: IApplicationContext = Depends(get_application_context),
     core: Core = Depends(get_core),
@@ -439,12 +430,12 @@ def update_company(
     company_response = core.update_company(
         account=account,
         company_id=company_id,
-        name=name,
-        website=website,
-        industry=industry,
-        organization_size=organization_size,
-        image=image,
-        cover_image=cover_image,
+        name=request.name,
+        website=request.website,
+        industry=request.industry,
+        organization_size=request.organization_size,
+        image_uri=request.image_uri,
+        cover_image_uri=request.cover_image_uri,
     )
     handle_response_status_code(response, company_response)
 

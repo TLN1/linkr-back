@@ -13,10 +13,8 @@ class ICompanyRepository(Protocol):
         website: str,
         industry: Industry,
         organization_size: OrganizationSize,
-        image: bytes,
-        image_type: str,
-        cover_image: bytes,
-        cover_image_type: str,
+        image_uri: str,
+        cover_image_uri: str,
     ) -> Company | None:
         pass
 
@@ -27,10 +25,8 @@ class ICompanyRepository(Protocol):
         website: str,
         industry: Industry,
         organization_size: OrganizationSize,
-        image: bytes,
-        image_type: str,
-        cover_image: bytes,
-        cover_image_type: str,
+        image_uri: str,
+        cover_image_uri: str,
     ) -> Optional[Company]:
         pass
 

@@ -81,10 +81,12 @@ class DeleteApplicationRequest(AccountRequest):
     id: int
 
 
+# FIXME
 @dataclass
 class CreateCompanyRequest:
-    token: str
     name: str
     website: str
     industry: Industry
     organization_size: OrganizationSize
+    image_uri: str
+    cover_image_uri: str

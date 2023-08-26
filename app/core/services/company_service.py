@@ -1,8 +1,5 @@
-import base64
 from dataclasses import dataclass
 from typing import Optional
-
-from fastapi import UploadFile
 
 from app.core.constants import Status
 from app.core.models import Account, Company, Industry, OrganizationSize
@@ -22,27 +19,25 @@ class CompanyService:
         website: str,
         industry: Industry,
         organization_size: OrganizationSize,
-        image: UploadFile,
-        cover_image: UploadFile,
+        image_uri: str,
+        cover_image_uri: str,
     ) -> tuple[Status, Optional[Company]]:
-        if image.content_type not in ["image/jpeg", "image/png"]:
-            return Status.UNSUPPORTED_IMAGE_FORMAT, None
+        # if image.content_type not in ["image/jpeg", "image/png"]:
+        #     return Status.UNSUPPORTED_IMAGE_FORMAT, None
+        #
+        # if cover_image.content_type not in ["image/jpeg", "image/png"]:
+        #     return Status.UNSUPPORTED_IMAGE_FORMAT, None
 
-        if cover_image.content_type not in ["image/jpeg", "image/png"]:
-            return Status.UNSUPPORTED_IMAGE_FORMAT, None
-
-        image_bytes = base64.b64encode(image.file.read())
-        cover_image_bytes = base64.b64encode(cover_image.file.read())
+        # image_bytes = base64.b64encode(image.file.read())
+        # cover_image_bytes = base64.b64encode(cover_image.file.read())
 
         company = self.company_repository.create_company(
             name=name,
             website=website,
             industry=industry,
             organization_size=organization_size,
-            image=image_bytes,
-            image_type=image.content_type,
-            cover_image=cover_image_bytes,
-            cover_image_type=cover_image.content_type,
+            image_uri=image_uri,
+            cover_image_uri=cover_image_uri,
         )
         if company is None:
             return Status.ERROR_CREATING_COMPANY, company
@@ -57,20 +52,11 @@ class CompanyService:
         website: str,
         industry: Industry,
         organization_size: OrganizationSize,
-        image: UploadFile,
-        cover_image: UploadFile,
+        image_uri: str,
+        cover_image_uri: str,
     ) -> tuple[Status, Optional[Company]]:
         if company_id not in account.companies:
             return Status.COMPANY_DOES_NOT_EXIST, None
-
-        if image.content_type not in ["image/jpeg", "image/png"]:
-            return Status.UNSUPPORTED_IMAGE_FORMAT, None
-
-        if cover_image.content_type not in ["image/jpeg", "image/png"]:
-            return Status.UNSUPPORTED_IMAGE_FORMAT, None
-
-        image_bytes = base64.b64encode(image.file.read())
-        cover_image_bytes = base64.b64encode(cover_image.file.read())
 
         company = self.company_repository.update_company(
             company_id=company_id,
@@ -78,10 +64,8 @@ class CompanyService:
             website=website,
             industry=industry,
             organization_size=organization_size,
-            image=image_bytes,
-            image_type=image.content_type,
-            cover_image=cover_image_bytes,
-            cover_image_type=cover_image.content_type,
+            image_uri=image_uri,
+            cover_image_uri=cover_image_uri,
         )
         if company is None:
             return Status.COMPANY_DOES_NOT_EXIST, None

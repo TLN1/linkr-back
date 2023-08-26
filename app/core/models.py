@@ -47,10 +47,8 @@ class Company(BaseModel):
     website: str
     industry: Industry
     organization_size: OrganizationSize
-    image: bytes
-    image_type: str
-    cover_image: bytes
-    cover_image_type: str
+    image_uri: str
+    cover_image_uri: str
 
 
 class Preference(BaseModel):

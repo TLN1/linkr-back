@@ -22,10 +22,8 @@ class InMemoryCompanyRepository(ICompanyRepository):
         website: str,
         industry: Industry,
         organization_size: OrganizationSize,
-        image: bytes,
-        image_type: str,
-        cover_image: bytes,
-        cover_image_type: str,
+        image_uri: str,
+        cover_image_uri: str,
     ) -> Company | None:
         self.companies.append(
             Company(
@@ -34,10 +32,8 @@ class InMemoryCompanyRepository(ICompanyRepository):
                 website=website,
                 industry=industry,
                 organization_size=organization_size,
-                image=image,
-                image_type=image_type,
-                cover_image=cover_image,
-                cover_image_type=cover_image_type,
+                image_uri=image_uri,
+                cover_image_uri=cover_image_uri,
             )
         )
         return self.companies[-1]
@@ -49,10 +45,8 @@ class InMemoryCompanyRepository(ICompanyRepository):
         website: str,
         industry: Industry,
         organization_size: OrganizationSize,
-        image: bytes,
-        image_type: str,
-        cover_image: bytes,
-        cover_image_type: str,
+        image_uri: str,
+        cover_image_uri: str,
     ) -> Optional[Company]:
         for company in self.companies:
             if company.id == company_id:
@@ -60,10 +54,8 @@ class InMemoryCompanyRepository(ICompanyRepository):
                 company.website = website
                 company.industry = industry
                 company.organization_size = organization_size
-                company.image = image
-                company.image_type = image_type
-                company.cover_image = cover_image
-                company.cover_image_type = cover_image_type
+                company.image_uri = image_uri
+                company.cover_image_uri = cover_image_uri
                 return company
         return None
 
@@ -92,10 +84,8 @@ class SqliteCompanyRepository(ICompanyRepository):
             website,
             industry,
             organization_size,
-            image,
-            image_type,
-            cover_image,
-            cover_image_type,
+            image_uri,
+            cover_image_uri,
         ) in cursor.execute("SELECT * FROM company WHERE id = ?", (company_id,)):
             return Company(
                 id=c_id,
@@ -103,10 +93,8 @@ class SqliteCompanyRepository(ICompanyRepository):
                 website=website,
                 industry=industry,
                 organization_size=organization_size,
-                image=image,
-                image_type=image_type,
-                cover_image=cover_image,
-                cover_image_type=cover_image_type,
+                image_uri=image_uri,
+                cover_image_uri=cover_image_uri,
             )
         return None
 
@@ -116,26 +104,22 @@ class SqliteCompanyRepository(ICompanyRepository):
         website: str,
         industry: Industry,
         organization_size: OrganizationSize,
-        image: bytes,
-        image_type: str,
-        cover_image: bytes,
-        cover_image_type: str,
+        image_uri: str,
+        cover_image_uri: str,
     ) -> Company | None:
         company = None
         cursor = self.connection.cursor()
         cursor.execute(
             "INSERT INTO company (company_name, website, industry, organization_size, "
-            "image, image_type, cover_image, cover_image_type) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            "image_uri, cover_image_uri) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
             (
                 name,
                 website,
                 str(industry),
                 str(organization_size),
-                image,
-                image_type,
-                cover_image,
-                cover_image_type,
+                image_uri,
+                cover_image_uri,
             ),
         )
 
@@ -145,21 +129,17 @@ class SqliteCompanyRepository(ICompanyRepository):
             website,
             industry,
             organization_size,
-            image,
-            image_type,
-            cover_image,
-            cover_image_type,
-        ) in cursor.execute("SELECT * FROM " "company ORDER BY " "id DESC " "LIMIT 1;"):
+            image_uri,
+            cover_image_uri,
+        ) in cursor.execute("SELECT * FROM company ORDER BY id DESC LIMIT 1;"):
             company = Company(
                 id=c_id,
                 name=name,
                 website=website,
                 industry=industry,
                 organization_size=organization_size,
-                image=image,
-                image_type=image_type,
-                cover_image=cover_image,
-                cover_image_type=cover_image_type,
+                image_uri=image_uri,
+                cover_image_uri=cover_image_uri,
             )
         self.connection.commit()
         cursor.close()
@@ -172,26 +152,22 @@ class SqliteCompanyRepository(ICompanyRepository):
         website: str,
         industry: Industry,
         organization_size: OrganizationSize,
-        image: bytes,
-        image_type: str,
-        cover_image: bytes,
-        cover_image_type: str,
+        image_uri: str,
+        cover_image_uri: str,
     ) -> Optional[Company]:
         cursor = self.connection.cursor()
         cursor.execute(
-            "UPDATE company company_name = ?, website = ?, industry = ?, "
-            "organization_size = ?, image = ?, "
-            "image_type = ?, cover_image = ?, cover_image_type = ? "
+            "UPDATE company SET company_name = ?, website = ?, industry = ?, "
+            "organization_size = ?, "
+            "image_uri = ?, cover_image_uri = ? "
             "WHERE id = ?",
             (
                 name,
                 website,
-                industry,
-                organization_size,
-                image,
-                image_type,
-                cover_image,
-                cover_image_type,
+                str(industry),
+                str(organization_size),
+                image_uri,
+                cover_image_uri,
                 company_id,
             ),
         )
