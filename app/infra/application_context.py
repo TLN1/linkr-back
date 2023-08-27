@@ -33,7 +33,7 @@ class InMemoryApplicationContext(IApplicationContext):
         self.active_accounts[token] = account.username
         return token
 
-    async def get_current_user(self, token: Any) -> Account:
+    def get_current_user(self, token: Any) -> Account:
         unauthorized_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authorized",
@@ -86,7 +86,7 @@ class InMemoryOauthApplicationContext(IApplicationContext):
         encoded_jwt = jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
         return str(encoded_jwt)
 
-    async def get_current_user(
+    def get_current_user(
         self, token: Any = Annotated[str, Depends(oauth2_scheme)]
     ) -> Account:
         credentials_exception = HTTPException(

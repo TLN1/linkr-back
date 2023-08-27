@@ -131,12 +131,16 @@ class Core:
         website: str,
         industry: Industry,
         organization_size: OrganizationSize,
+        image_uri: str,
+        cover_image_uri: str,
     ) -> CoreResponse:
         status, company = self.company_service.create_company(
             name=name,
             website=website,
             industry=industry,
             organization_size=organization_size,
+            image_uri=image_uri,
+            cover_image_uri=cover_image_uri,
         )
 
         if company is None:
@@ -162,6 +166,8 @@ class Core:
         website: str,
         industry: Industry,
         organization_size: OrganizationSize,
+        image_uri: str,
+        cover_image_uri: str,
     ) -> CoreResponse:
         status, company = self.company_service.update_company(
             account=account,
@@ -170,6 +176,8 @@ class Core:
             website=website,
             industry=industry,
             organization_size=organization_size,
+            image_uri=image_uri,
+            cover_image_uri=cover_image_uri,
         )
         if company is None:
             return CoreResponse(status=status)

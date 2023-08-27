@@ -2,6 +2,7 @@ from typing import Annotated
 
 import uvicorn
 from fastapi import Depends, FastAPI, HTTPException, Response
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 
@@ -30,6 +31,7 @@ from app.core.models import (
 from app.core.requests import (
     ApplicationInteractionRequest,
     CreateApplicationRequest,
+    CreateCompanyRequest,
     DeleteApplicationRequest,
     GetApplicationRequest,
     RegisterRequest,
@@ -46,12 +48,29 @@ from app.infra.application_context import (
     InMemoryOauthApplicationContext,
 )
 from app.infra.auth_utils import oauth2_scheme, pwd_context
+from app.infra.db_setup import ConnectionProvider
 from app.infra.repository.account import InMemoryAccountRepository
 from app.infra.repository.application import InMemoryApplicationRepository
-from app.infra.repository.company import InMemoryCompanyRepository
+from app.infra.repository.company import SqliteCompanyRepository
 from app.infra.repository.user import InMemoryUserRepository
 
 app = FastAPI()
+
+
+origins = [
+    "http://localhost",
+    "http://localhost:8080",
+    "http://localhost:19006",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
@@ -62,7 +81,9 @@ in_memory_user_repository = InMemoryUserRepository()
 in_memory_application_context = InMemoryApplicationContext(
     account_repository=in_memory_account_repository, hash_verifier=pwd_context.verify
 )
-in_memory_company_repository = InMemoryCompanyRepository()
+in_memory_company_repository = SqliteCompanyRepository(
+    connection=ConnectionProvider.get_connection()
+)
 in_memory_oauth_application_context = InMemoryOauthApplicationContext(
     account_repository=in_memory_account_repository, hash_verifier=pwd_context.verify
 )
@@ -108,7 +129,7 @@ async def read_users_me(
     token: Annotated[str, Depends(oauth2_scheme)],
     application_context: IApplicationContext = Depends(get_application_context),
 ) -> Account:
-    return await application_context.get_current_user(token)
+    return application_context.get_current_user(token)
 
 
 @app.post("/token", response_model=Token)
@@ -132,14 +153,18 @@ async def login_for_access_token(
     response_model=Account,
 )
 def register(
-    response: Response, username: str, password: str, core: Core = Depends(get_core)
+    response: Response,
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    core: Core = Depends(get_core),
 ) -> BaseModel:
     """
     - Registers user
     - Returns token for subsequent requests
     """
 
-    account_response = core.register(RegisterRequest(username, password))
+    account_response = core.register(
+        RegisterRequest(form_data.username, form_data.password)
+    )
     handle_response_status_code(response, account_response)
     return account_response.response_content
 
@@ -176,7 +201,7 @@ async def update_user(
     core: Core = Depends(get_core),
     application_context: IApplicationContext = Depends(get_application_context),
 ) -> BaseModel:
-    account = await application_context.get_current_user(token=token)
+    account = application_context.get_current_user(token=token)
 
     setup_user_response = core.update_user(
         SetupUserRequest(
@@ -211,7 +236,7 @@ async def create_application(
     - Creates application
     - Returns application id for subsequent requests
     """
-    account = await application_context.get_current_user(token)
+    account = application_context.get_current_user(token)
 
     create_application_response = core.create_application(
         CreateApplicationRequest(
@@ -240,7 +265,7 @@ async def get_application(
     """
     - Obtains application with application id
     """
-    account = await application_context.get_current_user(token)
+    account = application_context.get_current_user(token)
 
     get_application_response = core.get_application(
         GetApplicationRequest(account=account, id=application_id)
@@ -266,7 +291,7 @@ async def update_application(
     """
     - Update application
     """
-    account = await application_context.get_current_user(token)
+    account = application_context.get_current_user(token)
 
     update_application_response = core.update_application(
         UpdateApplicationRequest(
@@ -295,7 +320,7 @@ async def application_interaction(
     """
     - Saves interaction with application
     """
-    account = await application_context.get_current_user(token)
+    account = application_context.get_current_user(token)
 
     application_interaction_response = core.application_interaction(
         ApplicationInteractionRequest(id=application_id, account=account)
@@ -316,13 +341,23 @@ async def delete_application(
     """
     - Deletes application
     """
-    account = await application_context.get_current_user(token)
+    account = application_context.get_current_user(token)
     delete_application_response = core.delete_application(
         DeleteApplicationRequest(account=account, id=application_id)
     )
 
     handle_response_status_code(response, delete_application_response)
     return delete_application_response.response_content
+
+
+@app.get("/industry", responses={200: {}})
+def get_industries() -> list[str]:
+    return [e.value for e in Industry]
+
+
+@app.get("/organization-size", responses={200: {}})
+def get_organization_sizes() -> list[str]:
+    return [e.value for e in OrganizationSize]
 
 
 @app.post(
@@ -334,12 +369,9 @@ async def delete_application(
     },
     response_model=Company,
 )
-async def create_company(
+def create_company(
     response: Response,
-    name: str,
-    website: str,
-    industry: Industry,
-    organization_size: OrganizationSize,
+    request: CreateCompanyRequest,
     token: Annotated[str, Depends(oauth2_scheme)],
     application_context: IApplicationContext = Depends(get_application_context),
     core: Core = Depends(get_core),
@@ -348,13 +380,15 @@ async def create_company(
     - Registers company
     - Returns created company
     """
-    account = await application_context.get_current_user(token=token)
+    account = application_context.get_current_user(token=token)
     company_response = core.create_company(
         account=account,
-        name=name,
-        website=website,
-        industry=industry,
-        organization_size=organization_size,
+        name=request.name,
+        website=request.website,
+        industry=request.industry,
+        organization_size=request.organization_size,
+        image_uri=request.image_uri,
+        cover_image_uri=request.cover_image_uri,
     )
     handle_response_status_code(response, company_response)
     return company_response.response_content
@@ -368,10 +402,9 @@ async def create_company(
     },
     response_model=Company,
 )
-async def get_company(
+def get_company(
     response: Response,
     company_id: int,
-    token: Annotated[str, Depends(oauth2_scheme)],
     core: Core = Depends(get_core),
 ) -> BaseModel:
     company_response = core.get_company(company_id=company_id)
@@ -388,26 +421,25 @@ async def get_company(
     },
     response_model=Company,
 )
-async def update_company(
+def update_company(
     response: Response,
     company_id: int,
-    name: str,
-    website: str,
-    industry: Industry,
-    organization_size: OrganizationSize,
+    request: CreateCompanyRequest,
     token: Annotated[str, Depends(oauth2_scheme)],
     application_context: IApplicationContext = Depends(get_application_context),
     core: Core = Depends(get_core),
 ) -> BaseModel:
-    account = await application_context.get_current_user(token)
+    account = application_context.get_current_user(token)
 
     company_response = core.update_company(
         account=account,
         company_id=company_id,
-        name=name,
-        website=website,
-        industry=industry,
-        organization_size=organization_size,
+        name=request.name,
+        website=request.website,
+        industry=request.industry,
+        organization_size=request.organization_size,
+        image_uri=request.image_uri,
+        cover_image_uri=request.cover_image_uri,
     )
     handle_response_status_code(response, company_response)
 
@@ -418,13 +450,13 @@ async def update_company(
     "/company/{company_id}",
     responses={200: {}, 404: {}, 500: {}},
 )
-async def delete_company(
+def delete_company(
     response: Response,
     company_id: int,
     token: Annotated[str, Depends(oauth2_scheme)],
     application_context: IApplicationContext = Depends(get_application_context),
     core: Core = Depends(get_core),
 ) -> None:
-    account = await application_context.get_current_user(token)
+    account = application_context.get_current_user(token)
     delete_response = core.delete_company(account=account, company_id=company_id)
     handle_response_status_code(response, delete_response)

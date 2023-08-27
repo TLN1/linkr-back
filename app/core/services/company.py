@@ -18,12 +18,16 @@ class CompanyService:
         website: str,
         industry: Industry,
         organization_size: OrganizationSize,
+        image_uri: str,
+        cover_image_uri: str,
     ) -> tuple[Status, Company | None]:
         company = self.company_repository.create_company(
             name=name,
             website=website,
             industry=industry,
             organization_size=organization_size,
+            image_uri=image_uri,
+            cover_image_uri=cover_image_uri,
         )
         if company is None:
             return Status.ERROR_CREATING_COMPANY, company
@@ -38,6 +42,8 @@ class CompanyService:
         website: str,
         industry: Industry,
         organization_size: OrganizationSize,
+        image_uri: str,
+        cover_image_uri: str,
     ) -> tuple[Status, Company | None]:
         if company_id not in account.companies:
             return Status.COMPANY_DOES_NOT_EXIST, None
@@ -48,6 +54,8 @@ class CompanyService:
             website=website,
             industry=industry,
             organization_size=organization_size,
+            image_uri=image_uri,
+            cover_image_uri=cover_image_uri,
         )
         if company is None:
             return Status.COMPANY_DOES_NOT_EXIST, None

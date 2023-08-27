@@ -18,6 +18,7 @@ class Status(Enum):
     ERROR_CREATING_COMPANY = "Error occurred creating company"
     COMPANY_DOES_NOT_EXIST = "Company does not exist"
     ERROR_DELETING_COMPANY = "Error occurred while deleting company"
+    UNSUPPORTED_IMAGE_FORMAT = "Unsupported image format"
 
 
 class HttpResponseCode(IntEnum):
@@ -42,4 +43,5 @@ STATUS_HTTP_MAPPING = {
     Status.COMPANY_DOES_NOT_EXIST: HttpResponseCode.BAD_REQUEST,
     Status.ERROR_DELETING_COMPANY: HttpResponseCode.SERVER_ERROR,
     Status.USER_NOT_FOUND: HttpResponseCode.NOT_FOUND,
+    Status.UNSUPPORTED_IMAGE_FORMAT: HttpResponseCode.BAD_REQUEST,
 }

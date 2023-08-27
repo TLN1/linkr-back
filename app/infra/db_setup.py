@@ -21,11 +21,20 @@ class ConnectionProvider:
 
 
 def create_tables(cursor: Cursor, connection: Connection) -> None:
-    cursor.execute("DROP TABLE IF EXISTS accounts;")
+    # cursor.execute("DROP TABLE IF EXISTS accounts;")
+    #
+    # cursor.execute(
+    #     "CREATE TABLE IF NOT EXISTS accounts (id INT, username TEXT, "
+    #     "password TEXT, token TEXT, token_is_valid INT);"
+    # )
+
+    cursor.execute("DROP TABLE IF EXISTS company;")
 
     cursor.execute(
-        "CREATE TABLE IF NOT EXISTS accounts (id INT, username TEXT, "
-        "password TEXT, token TEXT, token_is_valid INT);"
+        "CREATE TABLE IF NOT EXISTS company "
+        "(id INTEGER PRIMARY KEY, company_name TEXT, "
+        "website TEXT, industry TEXT, organization_size INT, "
+        "image_uri TEXT, cover_image_uri TEXT);"
     )
 
     connection.commit()

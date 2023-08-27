@@ -10,7 +10,7 @@ class IApplicationContext(Protocol):
     def create_access_token(self, account: Account) -> str:
         pass
 
-    async def get_current_user(self, token: Any) -> Account:
+    def get_current_user(self, token: Any) -> Account:
         pass
 
     def logout_user(self, token: str) -> None:

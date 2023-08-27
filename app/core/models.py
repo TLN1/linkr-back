@@ -9,10 +9,16 @@ from pydantic import BaseModel, Field
 class Industry(Enum):
     SOFTWARE_ENGINEERING = "Software Engineering"
 
+    def __str__(self) -> str:
+        return self.value
+
 
 # TODO: ADD VALUES
 class OrganizationSize(Enum):
     SMALL = "1-10 employees"
+
+    def __str__(self) -> str:
+        return self.value
 
 
 class JobLocation(Enum):
@@ -43,6 +49,8 @@ class Company(BaseModel):
     website: str
     industry: Industry
     organization_size: OrganizationSize
+    image_uri: str
+    cover_image_uri: str
     applications: list[int] = Field(default_factory=list)
 
     def link_application(self, application: Application) -> None:
