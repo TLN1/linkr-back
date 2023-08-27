@@ -161,7 +161,7 @@ class SqliteCompanyRepository(ICompanyRepository):
         organization_size: OrganizationSize,
         image_uri: str,
         cover_image_uri: str,
-    ) -> Optional[Company]:
+    ) -> Company | None:
         cursor = self.connection.cursor()
         cursor.execute(
             "UPDATE company SET company_name = ?, website = ?, industry = ?, "
@@ -187,3 +187,7 @@ class SqliteCompanyRepository(ICompanyRepository):
         cursor = self.connection.cursor()
         cursor.execute("DELETE FROM company WHERE id = ?", [company_id])
         return self.get_company(company_id) is None
+
+    def link_application(self, company_id: int, application: Application) -> bool:
+        # TODO: IMPLEMENT
+        return False

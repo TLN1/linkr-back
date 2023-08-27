@@ -48,9 +48,10 @@ from app.infra.application_context import (
     InMemoryOauthApplicationContext,
 )
 from app.infra.auth_utils import oauth2_scheme, pwd_context
+from app.infra.db_setup import ConnectionProvider
 from app.infra.repository.account import InMemoryAccountRepository
 from app.infra.repository.application import InMemoryApplicationRepository
-from app.infra.repository.company import InMemoryCompanyRepository
+from app.infra.repository.company import SqliteCompanyRepository
 from app.infra.repository.user import InMemoryUserRepository
 
 app = FastAPI()
@@ -200,7 +201,7 @@ async def update_user(
     core: Core = Depends(get_core),
     application_context: IApplicationContext = Depends(get_application_context),
 ) -> BaseModel:
-    account = await application_context.get_current_user(token=token)
+    account = application_context.get_current_user(token=token)
 
     setup_user_response = core.update_user(
         SetupUserRequest(
@@ -235,7 +236,7 @@ async def create_application(
     - Creates application
     - Returns application id for subsequent requests
     """
-    account = await application_context.get_current_user(token)
+    account = application_context.get_current_user(token)
 
     create_application_response = core.create_application(
         CreateApplicationRequest(
@@ -264,7 +265,7 @@ async def get_application(
     """
     - Obtains application with application id
     """
-    account = await application_context.get_current_user(token)
+    account = application_context.get_current_user(token)
 
     get_application_response = core.get_application(
         GetApplicationRequest(account=account, id=application_id)
@@ -290,7 +291,7 @@ async def update_application(
     """
     - Update application
     """
-    account = await application_context.get_current_user(token)
+    account = application_context.get_current_user(token)
 
     update_application_response = core.update_application(
         UpdateApplicationRequest(
@@ -319,7 +320,7 @@ async def application_interaction(
     """
     - Saves interaction with application
     """
-    account = await application_context.get_current_user(token)
+    account = application_context.get_current_user(token)
 
     application_interaction_response = core.application_interaction(
         ApplicationInteractionRequest(id=application_id, account=account)
@@ -340,7 +341,7 @@ async def delete_application(
     """
     - Deletes application
     """
-    account = await application_context.get_current_user(token)
+    account = application_context.get_current_user(token)
     delete_application_response = core.delete_application(
         DeleteApplicationRequest(account=account, id=application_id)
     )
