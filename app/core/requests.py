@@ -10,7 +10,7 @@ from app.core.models import (
     JobType,
     OrganizationSize,
     Requirement,
-    User,
+    User, Education, Skill, Experience,
 )
 
 
@@ -91,3 +91,11 @@ class CreateCompanyRequest:
     organization_size: OrganizationSize
     image_uri: str
     cover_image_uri: str
+
+
+@dataclass
+class UpdateUserRequest:
+    username: str
+    education: list[Education] = field(default_factory=list)
+    skills: list[Skill] = field(default_factory=list)
+    experience: list[Experience] = field(default_factory=list)
