@@ -54,6 +54,7 @@ class CreateApplicationRequest(AccountRequest):
     experience_level: ExperienceLevel = ExperienceLevel.JUNIOR
     requirements: list[Requirement] = field(default_factory=list)
     benefits: list[Benefit] = field(default_factory=list)
+    company_id: int = 0
 
 
 @dataclass

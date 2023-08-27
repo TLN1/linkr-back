@@ -1,9 +1,8 @@
 from dataclasses import dataclass, field
 from sqlite3 import Connection
-from typing import Optional
 
-from app.core.models import Company, Industry, OrganizationSize
-from app.core.repository.company_repository import ICompanyRepository
+from app.core.models import Application, Company, Industry, OrganizationSize
+from app.core.repository.company import ICompanyRepository
 
 
 @dataclass
@@ -47,7 +46,7 @@ class InMemoryCompanyRepository(ICompanyRepository):
         organization_size: OrganizationSize,
         image_uri: str,
         cover_image_uri: str,
-    ) -> Optional[Company]:
+    ) -> Company | None:
         for company in self.companies:
             if company.id == company_id:
                 company.name = name
@@ -68,6 +67,14 @@ class InMemoryCompanyRepository(ICompanyRepository):
         if company_to_delete is not None:
             self.companies.remove(company_to_delete)
             return True
+
+        return False
+
+    def link_application(self, company_id: int, application: Application) -> bool:
+        for company in self.companies:
+            if company.id == company_id:
+                company.link_application(application)
+                return True
 
         return False
 

@@ -1,16 +1,15 @@
 from dataclasses import dataclass
-from typing import Optional
 
 from app.core.constants import Status
-from app.core.models import Account, Company, Industry, OrganizationSize
-from app.core.repository.company_repository import ICompanyRepository
+from app.core.models import Account, Application, Company, Industry, OrganizationSize
+from app.core.repository.company import ICompanyRepository
 
 
 @dataclass
 class CompanyService:
     company_repository: ICompanyRepository
 
-    def get_company(self, company_id: int) -> Optional[Company]:
+    def get_company(self, company_id: int) -> Company | None:
         return self.company_repository.get_company(company_id=company_id)
 
     def create_company(
@@ -21,16 +20,7 @@ class CompanyService:
         organization_size: OrganizationSize,
         image_uri: str,
         cover_image_uri: str,
-    ) -> tuple[Status, Optional[Company]]:
-        # if image.content_type not in ["image/jpeg", "image/png"]:
-        #     return Status.UNSUPPORTED_IMAGE_FORMAT, None
-        #
-        # if cover_image.content_type not in ["image/jpeg", "image/png"]:
-        #     return Status.UNSUPPORTED_IMAGE_FORMAT, None
-
-        # image_bytes = base64.b64encode(image.file.read())
-        # cover_image_bytes = base64.b64encode(cover_image.file.read())
-
+    ) -> tuple[Status, Company | None]:
         company = self.company_repository.create_company(
             name=name,
             website=website,
@@ -54,7 +44,7 @@ class CompanyService:
         organization_size: OrganizationSize,
         image_uri: str,
         cover_image_uri: str,
-    ) -> tuple[Status, Optional[Company]]:
+    ) -> tuple[Status, Company | None]:
         if company_id not in account.companies:
             return Status.COMPANY_DOES_NOT_EXIST, None
 
@@ -79,3 +69,11 @@ class CompanyService:
         if self.company_repository.delete_company(company_id=company_id):
             return Status.OK
         return Status.ERROR_DELETING_COMPANY
+
+    def link_application(self, company_id: int, application: Application) -> Status:
+        if not self.company_repository.link_application(
+            company_id=company_id, application=application
+        ):
+            return Status.APPLICATION_CREATE_ERROR
+
+        return Status.OK

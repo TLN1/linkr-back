@@ -1,6 +1,6 @@
-from typing import Optional, Protocol
+from typing import Protocol
 
-from app.core.models import Company, Industry, OrganizationSize
+from app.core.models import Application, Company, Industry, OrganizationSize
 
 
 class ICompanyRepository(Protocol):
@@ -27,8 +27,11 @@ class ICompanyRepository(Protocol):
         organization_size: OrganizationSize,
         image_uri: str,
         cover_image_uri: str,
-    ) -> Optional[Company]:
+    ) -> Company | None:
         pass
 
     def delete_company(self, company_id: int) -> bool:
+        pass
+
+    def link_application(self, company_id: int, application: Application) -> bool:
         pass

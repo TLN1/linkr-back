@@ -11,8 +11,8 @@ class Status(Enum):
     USER_SETUP_ERROR = "user setup error"
     USER_NOT_FOUND = "User not found"
     APPLICATION_CREATE_ERROR = "application creation error"
-    APPLICATION_DOES_NOT_EXIST = "application does not exist"
     APPLICATION_UPDATE_ERROR = "application update failed"
+    APPLICATION_DOES_NOT_EXIST = "application does not exist"
     APPLICATION_INTERACTION_ERROR = "application interaction failed"
     APPLICATION_DELETE_ERROR = "application deletion failed"
     ERROR_CREATING_COMPANY = "Error occurred creating company"
@@ -37,10 +37,10 @@ STATUS_HTTP_MAPPING = {
     Status.ACCOUNT_DOES_NOT_EXIST: HttpResponseCode.BAD_REQUEST,
     Status.USER_NOT_LOGGED_IN: HttpResponseCode.BAD_REQUEST,
     Status.APPLICATION_CREATE_ERROR: HttpResponseCode.SERVER_ERROR,
-    Status.APPLICATION_DOES_NOT_EXIST: HttpResponseCode.BAD_REQUEST,
     Status.APPLICATION_UPDATE_ERROR: HttpResponseCode.SERVER_ERROR,
+    Status.APPLICATION_DOES_NOT_EXIST: HttpResponseCode.BAD_REQUEST,
     Status.ERROR_CREATING_COMPANY: HttpResponseCode.SERVER_ERROR,
-    Status.COMPANY_DOES_NOT_EXIST: HttpResponseCode.NOT_FOUND,
+    Status.COMPANY_DOES_NOT_EXIST: HttpResponseCode.BAD_REQUEST,
     Status.ERROR_DELETING_COMPANY: HttpResponseCode.SERVER_ERROR,
     Status.USER_NOT_FOUND: HttpResponseCode.NOT_FOUND,
     Status.UNSUPPORTED_IMAGE_FORMAT: HttpResponseCode.BAD_REQUEST,

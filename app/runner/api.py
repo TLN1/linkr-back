@@ -39,19 +39,18 @@ from app.core.requests import (
     UpdateApplicationRequest,
 )
 from app.core.responses import CoreResponse
-from app.core.services.account_service import AccountService
-from app.core.services.application_service import ApplicationService
-from app.core.services.company_service import CompanyService
-from app.core.services.user_service import UserService
+from app.core.services.account import AccountService
+from app.core.services.application import ApplicationService
+from app.core.services.company import CompanyService
+from app.core.services.user import UserService
 from app.infra.application_context import (
     InMemoryApplicationContext,
     InMemoryOauthApplicationContext,
 )
 from app.infra.auth_utils import oauth2_scheme, pwd_context
-from app.infra.db_setup import ConnectionProvider
-from app.infra.repository.account_repository import InMemoryAccountRepository
-from app.infra.repository.application_repository import InMemoryApplicationRepository
-from app.infra.repository.company import SqliteCompanyRepository
+from app.infra.repository.account import InMemoryAccountRepository
+from app.infra.repository.application import InMemoryApplicationRepository
+from app.infra.repository.company import InMemoryCompanyRepository
 from app.infra.repository.user import InMemoryUserRepository
 
 app = FastAPI()
@@ -179,7 +178,10 @@ def register(
 
 @app.get("/user/{username}", response_model=User)
 def get_user(
-    response: Response, username: str, core: Core = Depends(get_core)
+    token: Annotated[str, Depends(oauth2_scheme)],
+    response: Response,
+    username: str,
+    core: Core = Depends(get_core),
 ) -> BaseModel:
     get_user_response = core.get_user(username=username)
     handle_response_status_code(response, get_user_response)
@@ -198,7 +200,7 @@ async def update_user(
     core: Core = Depends(get_core),
     application_context: IApplicationContext = Depends(get_application_context),
 ) -> BaseModel:
-    account = application_context.get_current_user(token=token)
+    account = await application_context.get_current_user(token=token)
 
     setup_user_response = core.update_user(
         SetupUserRequest(
@@ -216,7 +218,7 @@ async def update_user(
     return setup_user_response.response_content
 
 
-@app.post("/application/create", response_model=ApplicationId)
+@app.post("/application", response_model=ApplicationId)
 async def create_application(
     response: Response,
     location: JobLocation,
@@ -224,6 +226,7 @@ async def create_application(
     experience_level: ExperienceLevel,
     requirements: list[Requirement],
     benefits: list[Benefit],
+    company_id: int,
     token: Annotated[str, Depends(oauth2_scheme)],
     core: Core = Depends(get_core),
     application_context: IApplicationContext = Depends(get_application_context),
@@ -232,8 +235,7 @@ async def create_application(
     - Creates application
     - Returns application id for subsequent requests
     """
-
-    account = application_context.get_current_user(token)
+    account = await application_context.get_current_user(token)
 
     create_application_response = core.create_application(
         CreateApplicationRequest(
@@ -243,6 +245,7 @@ async def create_application(
             experience_level=experience_level,
             requirements=requirements,
             benefits=benefits,
+            company_id=company_id,
         )
     )
 
@@ -250,7 +253,7 @@ async def create_application(
     return create_application_response.response_content
 
 
-@app.get("/application/get/{application_id}", response_model=Application)
+@app.get("/application/{application_id}", response_model=Application)
 async def get_application(
     response: Response,
     application_id: int,
@@ -261,7 +264,7 @@ async def get_application(
     """
     - Obtains application with application id
     """
-    account = application_context.get_current_user(token)
+    account = await application_context.get_current_user(token)
 
     get_application_response = core.get_application(
         GetApplicationRequest(account=account, id=application_id)
@@ -271,7 +274,7 @@ async def get_application(
     return get_application_response.response_content
 
 
-@app.put("/application/update/{application_id}")
+@app.put("/application/{application_id}/update")
 async def update_application(
     response: Response,
     application_id: int,
@@ -287,7 +290,7 @@ async def update_application(
     """
     - Update application
     """
-    account = application_context.get_current_user(token)
+    account = await application_context.get_current_user(token)
 
     update_application_response = core.update_application(
         UpdateApplicationRequest(
@@ -305,7 +308,7 @@ async def update_application(
     return update_application_response.response_content
 
 
-@app.put("/application/interaction/{application_id}")
+@app.put("/application/{application_id}/interaction")
 async def application_interaction(
     response: Response,
     application_id: int,
@@ -316,7 +319,7 @@ async def application_interaction(
     """
     - Saves interaction with application
     """
-    account = application_context.get_current_user(token)
+    account = await application_context.get_current_user(token)
 
     application_interaction_response = core.application_interaction(
         ApplicationInteractionRequest(id=application_id, account=account)
@@ -326,7 +329,7 @@ async def application_interaction(
     return application_interaction_response.response_content
 
 
-@app.delete("/application/delete/{application_id}")
+@app.delete("/application/{application_id}")
 async def delete_application(
     response: Response,
     application_id: int,
@@ -337,7 +340,7 @@ async def delete_application(
     """
     - Deletes application
     """
-    account = application_context.get_current_user(token)
+    account = await application_context.get_current_user(token)
     delete_application_response = core.delete_application(
         DeleteApplicationRequest(account=account, id=application_id)
     )
@@ -456,17 +459,3 @@ def delete_company(
     account = application_context.get_current_user(token)
     delete_response = core.delete_company(account=account, company_id=company_id)
     handle_response_status_code(response, delete_response)
-
-
-# FOR TESTING FILE UPLOADS
-# @app.post(
-#     "/test/images",
-#     responses={200: {}, 404: {}, 500: {}},
-# )
-# def print_image_type(response: Response, image: UploadFile):
-#     base_encoded = base64.b64encode(image.file.read())
-#     print(base_encoded)
-#     encoded_string = base_encoded.decode()
-#     print(encoded_string)
-#
-#     return encoded_string

@@ -14,10 +14,10 @@ from app.core.requests import (
     UpdateApplicationRequest,
 )
 from app.core.responses import CoreResponse
-from app.core.services.account_service import AccountService
-from app.core.services.application_service import ApplicationService
-from app.core.services.company_service import CompanyService
-from app.core.services.user_service import UserService
+from app.core.services.account import AccountService
+from app.core.services.application import ApplicationService
+from app.core.services.company import CompanyService
+from app.core.services.user import UserService
 
 
 @dataclass
@@ -61,7 +61,11 @@ class Core:
         return CoreResponse(status=status, response_content=user)
 
     def create_application(self, request: CreateApplicationRequest) -> CoreResponse:
-        status, application_id = self.application_service.create_application(
+        get_company_response = self.get_company(request.company_id)
+        if get_company_response.status != Status.OK:
+            return get_company_response
+
+        status, application = self.application_service.create_application(
             account=request.account,
             location=request.location,
             job_type=request.job_type,
@@ -70,12 +74,19 @@ class Core:
             benefits=request.benefits,
         )
 
-        application_id_response = (
-            BaseModel()
-            if application_id is None
-            else ApplicationId(application_id=application_id)
+        if status != Status.OK or application is None:
+            return CoreResponse(status)
+
+        self.account_service.link_application(
+            account=request.account, application=application
         )
-        return CoreResponse(status=status, response_content=application_id_response)
+        self.company_service.link_application(
+            company_id=request.company_id, application=application
+        )
+
+        return CoreResponse(
+            status=status, response_content=ApplicationId(application_id=application.id)
+        )
 
     def get_application(self, request: GetApplicationRequest) -> CoreResponse:
         status, application = self.application_service.get_application(id=request.id)
@@ -84,7 +95,7 @@ class Core:
         return CoreResponse(status=status, response_content=application_response)
 
     def update_application(self, request: UpdateApplicationRequest) -> CoreResponse:
-        status = self.application_service.update_application(
+        status, application = self.application_service.update_application(
             account=request.account,
             id=request.id,
             location=request.location,
@@ -93,7 +104,11 @@ class Core:
             requirements=request.requirements,
             benefits=request.benefits,
         )
-        return CoreResponse(status=status)
+
+        if status != Status.OK or application is None:
+            return CoreResponse(status=status)
+
+        return CoreResponse(status=status, response_content=application)
 
     def application_interaction(
         self, request: ApplicationInteractionRequest
