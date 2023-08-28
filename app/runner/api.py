@@ -352,6 +352,21 @@ def get_industries() -> list[str]:
     return [e.value for e in Industry]
 
 
+@app.get("/job_location", responses={200: {}})
+def get_job_locations() -> list[str]:
+    return [j.value for j in JobLocation]
+
+
+@app.get("/job_type", responses={200: {}})
+def get_industries() -> list[str]:
+    return [j.value for j in JobType]
+
+
+@app.get("/experience_level", responses={200: {}})
+def get_industries() -> list[str]:
+    return [e.value for e in ExperienceLevel]
+
+
 @app.get("/organization-size", responses={200: {}})
 def get_organization_sizes() -> list[str]:
     return [e.value for e in OrganizationSize]
