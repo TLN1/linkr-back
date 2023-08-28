@@ -99,3 +99,11 @@ class UpdateUserRequest:
     education: list[Education] = field(default_factory=list)
     skills: list[Skill] = field(default_factory=list)
     experience: list[Experience] = field(default_factory=list)
+
+
+@dataclass
+class UpdatePreferencesRequest:
+    industry: list[Industry] = field(default_factory=list)
+    job_location: list[JobLocation] = field(default_factory=list)
+    job_type: list[JobType] = field(default_factory=list)
+    experience_level: list[ExperienceLevel] = field(default_factory=list)

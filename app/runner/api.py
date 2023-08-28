@@ -36,7 +36,7 @@ from app.core.requests import (
     GetApplicationRequest,
     RegisterRequest,
     SetupUserRequest,
-    UpdateApplicationRequest, UpdateUserRequest,
+    UpdateApplicationRequest, UpdateUserRequest, UpdatePreferencesRequest,
 )
 from app.core.responses import CoreResponse
 from app.core.services.account import AccountService
@@ -214,6 +214,17 @@ async def update_user(
     )
     handle_response_status_code(response, setup_user_response)
     return setup_user_response.response_content
+
+
+@app.put("/preferences/update", response_model=User)
+async def update_preferences(
+        response: Response,
+        update_preferences_request: UpdatePreferencesRequest,
+        token: Annotated[str, Depends(oauth2_scheme)],
+        core: Core = Depends(get_core),
+        application_context: IApplicationContext = Depends(get_application_context),
+):
+    account = application_context.get_current_user(token=token)
 
 
 @app.post("/application", response_model=ApplicationId)

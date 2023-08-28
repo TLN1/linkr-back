@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from pydantic import BaseModel
 
 from app.core.constants import Status
-from app.core.models import Account, ApplicationId, Industry, OrganizationSize
+from app.core.models import Account, ApplicationId, Industry, OrganizationSize, Preference
 from app.core.requests import (
     ApplicationInteractionRequest,
     CreateApplicationRequest,
@@ -11,7 +11,7 @@ from app.core.requests import (
     GetApplicationRequest,
     RegisterRequest,
     SetupUserRequest,
-    UpdateApplicationRequest,
+    UpdateApplicationRequest, UpdatePreferencesRequest,
 )
 from app.core.responses import CoreResponse
 from app.core.services.account import AccountService
@@ -59,6 +59,18 @@ class Core:
             return CoreResponse(status=status)
 
         return CoreResponse(status=status, response_content=user)
+
+    def update_preferences(self, request: UpdatePreferencesRequest):
+        status, user = self.user_service.update_preferences(
+            Preference(industry=request.industry, job_type=request.job_type,
+                       job_location=request.job_location, experience_level=request.experience_level)
+        )
+        # TODO: check this part
+        if status != Status.OK or user is None:
+            return CoreResponse(status=status)
+
+        return CoreResponse(status=status, response_content=user)
+
 
     def create_application(self, request: CreateApplicationRequest) -> CoreResponse:
         get_company_response = self.get_company(request.company_id)
