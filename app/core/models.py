@@ -51,6 +51,7 @@ class Company(BaseModel):
     organization_size: OrganizationSize
     image_uri: str
     cover_image_uri: str
+    owner_username: str
     applications: list[int] = Field(default_factory=list)
 
     def link_application(self, application: Application) -> None:
@@ -84,7 +85,7 @@ class User(BaseModel):
     education: list[Education] = Field(default_factory=list)
     skills: list[Skill] = Field(default_factory=list)
     experience: list[Experience] = Field(default_factory=list)
-    preference: Preference = Preference()
+    preference: Preference = Field(default_factory=Preference)
 
     def update(
         self,
@@ -100,17 +101,18 @@ class User(BaseModel):
 
 
 class Account(BaseModel):
-    id: int
     username: str
     password: str
-    companies: list[int] = Field(default_factory=list)
-    applications: list[int] = Field(default_factory=list)
+    companies: list[Company] = Field(default_factory=list)
 
     def link_company(self, company: Company) -> None:
-        self.companies.append(company.id)
+        self.companies.append(company)
 
-    def link_application(self, application: Application) -> None:
-        self.applications.append(application.id)
+    def has_company_with_id(self, company_id: int) -> bool:
+        filtered = list(
+            filter(lambda company: company.id == company_id, self.companies)
+        )
+        return len(filtered) > 0
 
 
 class Requirement(BaseModel):

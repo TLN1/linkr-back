@@ -66,7 +66,6 @@ class Core:
             return get_company_response
 
         status, application = self.application_service.create_application(
-            account=request.account,
             location=request.location,
             job_type=request.job_type,
             experience_level=request.experience_level,
@@ -77,12 +76,10 @@ class Core:
         if status != Status.OK or application is None:
             return CoreResponse(status)
 
-        self.account_service.link_application(
-            account=request.account, application=application
-        )
-        self.company_service.link_application(
+        status = self.company_service.link_application(
             company_id=request.company_id, application=application
         )
+        # TODO: what if error occured during linking
 
         return CoreResponse(
             status=status, response_content=ApplicationId(application_id=application.id)
@@ -141,13 +138,11 @@ class Core:
             organization_size=organization_size,
             image_uri=image_uri,
             cover_image_uri=cover_image_uri,
+            owner_username=account.username,
         )
 
         if company is None:
             return CoreResponse(status=status)
-
-        status = self.account_service.link_company(account=account, company=company)
-        # TODO: what if error occurred during linking company with account
 
         return CoreResponse(status=status, response_content=company)
 
