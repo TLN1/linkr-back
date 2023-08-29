@@ -39,10 +39,6 @@ class ExperienceLevel(Enum):
     LEAD = "lead"
 
 
-class Benefit(BaseModel):
-    pass
-
-
 class Company(BaseModel):
     id: int
     name: str
@@ -52,10 +48,10 @@ class Company(BaseModel):
     image_uri: str
     cover_image_uri: str
     owner_username: str
-    applications: list[int] = Field(default_factory=list)
+    applications: list[Application] = Field(default_factory=list)
 
     def link_application(self, application: Application) -> None:
-        self.applications.append(application.id)
+        self.applications.append(application)
 
 
 class Preference(BaseModel):
@@ -115,17 +111,12 @@ class Account(BaseModel):
         return len(filtered) > 0
 
 
-class Requirement(BaseModel):
-    pass
-
-
 class Application(BaseModel):
     id: int
     location: JobLocation
     job_type: JobType
     experience_level: ExperienceLevel
-    requirements: list[Requirement]
-    benefits: list[Benefit]
+    description: str
     views: int = 0
 
     def update(
@@ -133,14 +124,12 @@ class Application(BaseModel):
         location: JobLocation,
         job_type: JobType,
         experience_level: ExperienceLevel,
-        requirements: list[Requirement],
-        benefits: list[Benefit],
+        description: str,
     ) -> None:
         self.location = location
         self.job_type = job_type
         self.experience_level = experience_level
-        self.requirements = requirements
-        self.benefits = benefits
+        self.description = description
 
 
 class ApplicationId(BaseModel):

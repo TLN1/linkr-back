@@ -1,15 +1,7 @@
 from dataclasses import dataclass
 
 from app.core.constants import Status
-from app.core.models import (
-    Account,
-    Application,
-    Benefit,
-    ExperienceLevel,
-    JobLocation,
-    JobType,
-    Requirement,
-)
+from app.core.models import Account, Application, ExperienceLevel, JobLocation, JobType
 from app.core.repository.application import IApplicationRepository
 
 
@@ -23,15 +15,13 @@ class ApplicationService:
         location: JobLocation,
         job_type: JobType,
         experience_level: ExperienceLevel,
-        requirements: list[Requirement],
-        benefits: list[Benefit],
+        description: str,
     ) -> tuple[Status, Application | None]:
         application = self.application_repository.create_application(
             location=location,
             job_type=job_type,
             experience_level=experience_level,
-            requirements=requirements,
-            benefits=benefits,
+            description=description,
         )
 
         if application is None:
@@ -53,8 +43,7 @@ class ApplicationService:
         location: JobLocation,
         job_type: JobType,
         experience_level: ExperienceLevel,
-        requirements: list[Requirement],
-        benefits: list[Benefit],
+        description: str,
     ) -> tuple[Status, Application | None]:
         if not self.application_repository.has_application(id=id):
             return Status.APPLICATION_DOES_NOT_EXIST, None
@@ -64,8 +53,7 @@ class ApplicationService:
             location=location,
             job_type=job_type,
             experience_level=experience_level,
-            requirements=requirements,
-            benefits=benefits,
+            description=description,
         )
 
         if application is None:

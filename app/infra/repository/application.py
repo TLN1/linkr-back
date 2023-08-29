@@ -1,13 +1,6 @@
 from dataclasses import dataclass, field
 
-from app.core.models import (
-    Application,
-    Benefit,
-    ExperienceLevel,
-    JobLocation,
-    JobType,
-    Requirement,
-)
+from app.core.models import Application, ExperienceLevel, JobLocation, JobType
 from app.core.repository.application import IApplicationRepository
 
 
@@ -25,8 +18,7 @@ class InMemoryApplicationRepository(IApplicationRepository):
         location: JobLocation,
         job_type: JobType,
         experience_level: ExperienceLevel,
-        requirements: list[Requirement],
-        benefits: list[Benefit],
+        description: str,
     ) -> Application | None:
         application_id = self._next_id()
         application = Application(
@@ -34,8 +26,7 @@ class InMemoryApplicationRepository(IApplicationRepository):
             location=location,
             job_type=job_type,
             experience_level=experience_level,
-            requirements=requirements,
-            benefits=benefits,
+            description=description,
             views=0,
         )
 
@@ -54,8 +45,7 @@ class InMemoryApplicationRepository(IApplicationRepository):
         location: JobLocation,
         job_type: JobType,
         experience_level: ExperienceLevel,
-        requirements: list[Requirement],
-        benefits: list[Benefit],
+        description: str,
     ) -> Application | None:
         if not self.has_application(id=id):
             return None
@@ -64,8 +54,7 @@ class InMemoryApplicationRepository(IApplicationRepository):
             location=location,
             job_type=job_type,
             experience_level=experience_level,
-            requirements=requirements,
-            benefits=benefits,
+            description=description,
         )
 
         return self.applications[id]

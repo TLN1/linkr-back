@@ -1,13 +1,6 @@
 from typing import Protocol
 
-from app.core.models import (
-    Application,
-    Benefit,
-    ExperienceLevel,
-    JobLocation,
-    JobType,
-    Requirement,
-)
+from app.core.models import Application, ExperienceLevel, JobLocation, JobType
 
 
 class IApplicationRepository(Protocol):
@@ -16,8 +9,7 @@ class IApplicationRepository(Protocol):
         location: JobLocation,
         job_type: JobType,
         experience_level: ExperienceLevel,
-        requirements: list[Requirement],
-        benefits: list[Benefit],
+        description: str,
     ) -> Application | None:
         pass
 
@@ -33,8 +25,7 @@ class IApplicationRepository(Protocol):
         location: JobLocation,
         job_type: JobType,
         experience_level: ExperienceLevel,
-        requirements: list[Requirement],
-        benefits: list[Benefit],
+        description: str,
     ) -> Application | None:
         pass
 

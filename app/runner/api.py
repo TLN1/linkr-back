@@ -13,7 +13,6 @@ from app.core.models import (
     Account,
     Application,
     ApplicationId,
-    Benefit,
     Company,
     Education,
     Experience,
@@ -23,7 +22,6 @@ from app.core.models import (
     JobType,
     OrganizationSize,
     Preference,
-    Requirement,
     Skill,
     Token,
     User,
@@ -126,7 +124,6 @@ def handle_response_status_code(
         )
 
 
-# TODO: get current user with depends
 @app.get("/users/me")
 async def read_users_me(
     token: Annotated[str, Depends(oauth2_scheme)],
@@ -228,8 +225,7 @@ async def create_application(
     location: JobLocation,
     job_type: JobType,
     experience_level: ExperienceLevel,
-    requirements: list[Requirement],
-    benefits: list[Benefit],
+    description: str,
     company_id: int,
     token: Annotated[str, Depends(oauth2_scheme)],
     core: Core = Depends(get_core),
@@ -247,8 +243,7 @@ async def create_application(
             location=location,
             job_type=job_type,
             experience_level=experience_level,
-            requirements=requirements,
-            benefits=benefits,
+            description=description,
             company_id=company_id,
         )
     )
@@ -285,8 +280,7 @@ async def update_application(
     location: JobLocation,
     job_type: JobType,
     experience_level: ExperienceLevel,
-    requirements: list[Requirement],
-    benefits: list[Benefit],
+    description: str,
     token: Annotated[str, Depends(oauth2_scheme)],
     application_context: IApplicationContext = Depends(get_application_context),
     core: Core = Depends(get_core),
@@ -303,8 +297,7 @@ async def update_application(
             location=location,
             job_type=job_type,
             experience_level=experience_level,
-            requirements=requirements,
-            benefits=benefits,
+            description=description,
         )
     )
 

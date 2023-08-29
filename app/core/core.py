@@ -69,8 +69,7 @@ class Core:
             location=request.location,
             job_type=request.job_type,
             experience_level=request.experience_level,
-            requirements=request.requirements,
-            benefits=request.benefits,
+            description=request.description,
         )
 
         if status != Status.OK or application is None:
@@ -98,8 +97,7 @@ class Core:
             location=request.location,
             job_type=request.job_type,
             experience_level=request.experience_level,
-            requirements=request.requirements,
-            benefits=request.benefits,
+            description=request.description,
         )
 
         if status != Status.OK or application is None:
