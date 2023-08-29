@@ -2,7 +2,7 @@ import json
 from dataclasses import dataclass, field
 from sqlite3 import Connection
 
-from app.core.models import User
+from app.core.models import User, Preference
 from app.core.repository.user import IUserRepository
 
 
@@ -27,6 +27,12 @@ class InMemoryUserRepository(IUserRepository):
 
     def has_user(self, username: str) -> bool:
         return username in self.users
+
+    def update_preferences(self, username: str, preference: Preference) -> User | None:
+        if not self.has_user(username=username):
+            return None
+        self.users[username].preference = preference
+        return self.users[username]
 
 
 @dataclass
@@ -77,3 +83,6 @@ class SqliteUserRepository(IUserRepository):
         cursor = self.connection.cursor()
         cursor.execute("SELECT COUNT(*) FROM user WHERE username = ?", (username,))
         return cursor.fetchone()[0] > 0
+
+    def update_preferences(self, username: str, preference: Preference) -> User | None:
+        pass

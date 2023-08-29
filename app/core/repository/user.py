@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from app.core.models import User
+from app.core.models import User, Preference
 
 
 class IUserRepository(Protocol):
@@ -14,4 +14,7 @@ class IUserRepository(Protocol):
         pass
 
     def has_user(self, username: str) -> bool:
+        pass
+
+    def update_preferences(self, username: str, preference: Preference) -> User | None:
         pass

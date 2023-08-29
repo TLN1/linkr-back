@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 
 from app.core.application_context import IApplicationContext
-from app.core.constants import STATUS_HTTP_MAPPING
+from app.core.constants import STATUS_HTTP_MAPPING, Status
 from app.core.core import Core
 from app.core.models import (
     Account,
@@ -216,7 +216,7 @@ async def update_user(
     return setup_user_response.response_content
 
 
-@app.put("/preferences/update", response_model=User)
+@app.put("/preferences/update", response_model=Preference)
 async def update_preferences(
         response: Response,
         update_preferences_request: UpdatePreferencesRequest,
@@ -225,18 +225,10 @@ async def update_preferences(
         application_context: IApplicationContext = Depends(get_application_context),
 ):
     account = application_context.get_current_user(token=token)
-    # TODO: implement
 
-
-@app.put("/preferences", response_model=User)
-async def get_preferences(
-        response: Response,
-        token: Annotated[str, Depends(oauth2_scheme)],
-        core: Core = Depends(get_core),
-        application_context: IApplicationContext = Depends(get_application_context),
-):
-    account = application_context.get_current_user(token=token)
-    # TODO: implement
+    update_preferences_response = core.update_preferences(account=account, request=update_preferences_request)
+    handle_response_status_code(response, update_preferences_response)
+    return update_preferences_response.response_content
 
 
 @app.post("/application", response_model=ApplicationId)

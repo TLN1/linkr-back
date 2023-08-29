@@ -60,17 +60,18 @@ class Core:
 
         return CoreResponse(status=status, response_content=user)
 
-    def update_preferences(self, request: UpdatePreferencesRequest):
+    def update_preferences(self, account: Account, request: UpdatePreferencesRequest):
         status, user = self.user_service.update_preferences(
-            Preference(industry=request.industry, job_type=request.job_type,
-                       job_location=request.job_location, experience_level=request.experience_level)
+            account=account,
+            preferences=Preference(industry=request.industry, job_type=request.job_type,
+                                   job_location=request.job_location, experience_level=request.experience_level)
         )
+
         # TODO: check this part
         if status != Status.OK or user is None:
             return CoreResponse(status=status)
 
         return CoreResponse(status=status, response_content=user)
-
 
     def create_application(self, request: CreateApplicationRequest) -> CoreResponse:
         get_company_response = self.get_company(request.company_id)
@@ -123,7 +124,7 @@ class Core:
         return CoreResponse(status=status, response_content=application)
 
     def application_interaction(
-        self, request: ApplicationInteractionRequest
+            self, request: ApplicationInteractionRequest
     ) -> CoreResponse:
         status = self.application_service.application_interaction(
             account=request.account, id=request.id
@@ -137,14 +138,14 @@ class Core:
         return CoreResponse(status=status)
 
     def create_company(
-        self,
-        account: Account,
-        name: str,
-        website: str,
-        industry: Industry,
-        organization_size: OrganizationSize,
-        image_uri: str,
-        cover_image_uri: str,
+            self,
+            account: Account,
+            name: str,
+            website: str,
+            industry: Industry,
+            organization_size: OrganizationSize,
+            image_uri: str,
+            cover_image_uri: str,
     ) -> CoreResponse:
         status, company = self.company_service.create_company(
             name=name,
@@ -171,15 +172,15 @@ class Core:
         return CoreResponse(status=Status.OK, response_content=company)
 
     def update_company(
-        self,
-        account: Account,
-        company_id: int,
-        name: str,
-        website: str,
-        industry: Industry,
-        organization_size: OrganizationSize,
-        image_uri: str,
-        cover_image_uri: str,
+            self,
+            account: Account,
+            company_id: int,
+            name: str,
+            website: str,
+            industry: Industry,
+            organization_size: OrganizationSize,
+            image_uri: str,
+            cover_image_uri: str,
     ) -> CoreResponse:
         status, company = self.company_service.update_company(
             account=account,

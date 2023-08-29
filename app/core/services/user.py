@@ -35,6 +35,11 @@ class UserService:
         user = self.user_repository.get_user(username=username)
         return Status.OK, user
 
-    def update_preferences(self, preferences: Preference) -> tuple[Status, User | None]:
-        # TODO: implement
-        pass
+    def update_preferences(self, account: Account, preferences: Preference) -> tuple[Status, User | None]:
+        updated_user = self.user_repository.update_preferences(
+            username=account.username, preference=preferences
+        )
+
+        status = Status.USER_SETUP_ERROR if updated_user is None else Status.OK
+
+        return status, updated_user
