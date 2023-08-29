@@ -73,10 +73,11 @@ app.add_middleware(
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
-application_repository = InMemoryApplicationRepository()
 user_repository = InMemoryUserRepository()
+application_repository = InMemoryApplicationRepository()
 company_repository = SqliteCompanyRepository(
-    connection=ConnectionProvider.get_connection()
+    application_repository=application_repository,
+    connection=ConnectionProvider.get_connection(),
 )
 account_repository = SqliteAccountRepository(
     company_repository=company_repository,
@@ -136,7 +137,7 @@ async def read_users_me(
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     application_context: IApplicationContext = Depends(get_application_context),
-) -> Token:
+) -> BaseModel:
     user = application_context.authenticate_user(form_data.username, form_data.password)
     access_token = application_context.create_access_token(account=user)
 
@@ -399,9 +400,10 @@ def create_company(
     response_model=Company,
 )
 def get_company(
+    _: Annotated[str, Depends(oauth2_scheme)],
     response: Response,
     company_id: int,
-    core: Core = Depends(get_core),
+    core: Core = Depends(get_core)
 ) -> BaseModel:
     company_response = core.get_company(company_id=company_id)
     handle_response_status_code(response, company_response)
@@ -426,7 +428,6 @@ def update_company(
     core: Core = Depends(get_core),
 ) -> BaseModel:
     account = application_context.get_current_user(token)
-    print(account)
 
     company_response = core.update_company(
         account=account,

@@ -10,10 +10,14 @@ class IApplicationRepository(Protocol):
         job_type: JobType,
         experience_level: ExperienceLevel,
         description: str,
+        company_id: int,
     ) -> Application | None:
         pass
 
     def get_application(self, id: int) -> Application | None:
+        pass
+
+    def get_company_applications(self, company_id: int) -> list[Application]:
         pass
 
     def has_application(self, id: int) -> bool:

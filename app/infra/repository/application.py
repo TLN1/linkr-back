@@ -19,6 +19,7 @@ class InMemoryApplicationRepository(IApplicationRepository):
         job_type: JobType,
         experience_level: ExperienceLevel,
         description: str,
+        company_id: int,
     ) -> Application | None:
         application_id = self._next_id()
         application = Application(
@@ -27,6 +28,7 @@ class InMemoryApplicationRepository(IApplicationRepository):
             job_type=job_type,
             experience_level=experience_level,
             description=description,
+            company_id=company_id,
             views=0,
         )
 
@@ -35,6 +37,14 @@ class InMemoryApplicationRepository(IApplicationRepository):
 
     def get_application(self, id: int) -> Application | None:
         return self.applications.get(id)
+
+    def get_company_applications(self, company_id: int) -> list[Application]:
+        return list(
+            filter(
+                lambda application: application.company_id == company_id,
+                self.applications.values(),
+            )
+        )
 
     def has_application(self, id: int) -> bool:
         return self.get_application(id=id) is not None

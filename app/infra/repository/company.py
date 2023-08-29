@@ -2,17 +2,25 @@ from dataclasses import dataclass, field
 from sqlite3 import Connection
 
 from app.core.models import Application, Company, Industry, OrganizationSize
+from app.core.repository.application import IApplicationRepository
 from app.core.repository.company import ICompanyRepository
 
 
 @dataclass
 class InMemoryCompanyRepository(ICompanyRepository):
+    application_repository: IApplicationRepository
     companies: list[Company] = field(default_factory=list)
 
     def get_company(self, company_id: int) -> Company | None:
         for company in self.companies:
             if company.id == company_id:
+                company.applications = (
+                    self.application_repository.get_company_applications(
+                        company_id=company_id
+                    )
+                )
                 return company
+
         return None
 
     def get_user_companies(self, username: str) -> list[Company]:
@@ -20,6 +28,11 @@ class InMemoryCompanyRepository(ICompanyRepository):
 
         for company in self.companies:
             if company.owner_username == username:
+                company.applications = (
+                    self.application_repository.get_company_applications(
+                        company_id=company.id
+                    )
+                )
                 result.append(company)
 
         return result
@@ -92,6 +105,7 @@ class InMemoryCompanyRepository(ICompanyRepository):
 
 @dataclass
 class SqliteCompanyRepository(ICompanyRepository):
+    application_repository: IApplicationRepository
     connection: Connection
 
     def get_company(self, company_id: int) -> Company | None:
@@ -106,7 +120,7 @@ class SqliteCompanyRepository(ICompanyRepository):
             cover_image_uri,
             owner_username,
         ) in cursor.execute("SELECT * FROM company WHERE id = ?", (company_id,)):
-            return Company(
+            company = Company(
                 id=c_id,
                 name=name,
                 website=website,
@@ -116,6 +130,12 @@ class SqliteCompanyRepository(ICompanyRepository):
                 cover_image_uri=cover_image_uri,
                 owner_username=owner_username,
             )
+
+            company.applications = self.application_repository.get_company_applications(
+                company_id=c_id
+            )
+            return company
+
         return None
 
     def get_user_companies(self, username: str) -> list[Company]:
@@ -142,6 +162,10 @@ class SqliteCompanyRepository(ICompanyRepository):
                 image_uri=image_uri,
                 cover_image_uri=cover_image_uri,
                 owner_username=owner_username,
+            )
+
+            company.applications = self.application_repository.get_company_applications(
+                company_id=company.id
             )
             result.append(company)
 
@@ -194,6 +218,7 @@ class SqliteCompanyRepository(ICompanyRepository):
                 owner_username=owner_username,
                 cover_image_uri=cover_image_uri,
             )
+
         self.connection.commit()
         cursor.close()
         return company
@@ -232,6 +257,8 @@ class SqliteCompanyRepository(ICompanyRepository):
     def delete_company(self, company_id: int) -> bool:
         cursor = self.connection.cursor()
         cursor.execute("DELETE FROM company WHERE id = ?", [company_id])
+        self.connection.commit()
+        cursor.close()
         return self.get_company(company_id) is None
 
     def link_application(self, company_id: int, application: Application) -> bool:

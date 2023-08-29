@@ -39,6 +39,28 @@ class ExperienceLevel(Enum):
     LEAD = "lead"
 
 
+class Application(BaseModel):
+    id: int
+    location: JobLocation
+    job_type: JobType
+    experience_level: ExperienceLevel
+    description: str
+    company_id: int
+    views: int = 0
+
+    def update(
+        self,
+        location: JobLocation,
+        job_type: JobType,
+        experience_level: ExperienceLevel,
+        description: str,
+    ) -> None:
+        self.location = location
+        self.job_type = job_type
+        self.experience_level = experience_level
+        self.description = description
+
+
 class Company(BaseModel):
     id: int
     name: str
@@ -109,27 +131,6 @@ class Account(BaseModel):
             filter(lambda company: company.id == company_id, self.companies)
         )
         return len(filtered) > 0
-
-
-class Application(BaseModel):
-    id: int
-    location: JobLocation
-    job_type: JobType
-    experience_level: ExperienceLevel
-    description: str
-    views: int = 0
-
-    def update(
-        self,
-        location: JobLocation,
-        job_type: JobType,
-        experience_level: ExperienceLevel,
-        description: str,
-    ) -> None:
-        self.location = location
-        self.job_type = job_type
-        self.experience_level = experience_level
-        self.description = description
 
 
 class ApplicationId(BaseModel):
