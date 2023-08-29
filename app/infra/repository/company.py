@@ -15,6 +15,15 @@ class InMemoryCompanyRepository(ICompanyRepository):
                 return company
         return None
 
+    def get_user_companies(self, username: str) -> list[Company]:
+        result = []
+
+        for company in self.companies:
+            if company.owner_username == username:
+                result.append(company)
+
+        return result
+
     def create_company(
         self,
         name: str,
@@ -23,6 +32,7 @@ class InMemoryCompanyRepository(ICompanyRepository):
         organization_size: OrganizationSize,
         image_uri: str,
         cover_image_uri: str,
+        owner_username: str,
     ) -> Company | None:
         self.companies.append(
             Company(
@@ -33,6 +43,7 @@ class InMemoryCompanyRepository(ICompanyRepository):
                 organization_size=organization_size,
                 image_uri=image_uri,
                 cover_image_uri=cover_image_uri,
+                owner_username=owner_username,
             )
         )
         return self.companies[-1]
@@ -93,6 +104,7 @@ class SqliteCompanyRepository(ICompanyRepository):
             organization_size,
             image_uri,
             cover_image_uri,
+            owner_username,
         ) in cursor.execute("SELECT * FROM company WHERE id = ?", (company_id,)):
             return Company(
                 id=c_id,
@@ -102,8 +114,38 @@ class SqliteCompanyRepository(ICompanyRepository):
                 organization_size=organization_size,
                 image_uri=image_uri,
                 cover_image_uri=cover_image_uri,
+                owner_username=owner_username,
             )
         return None
+
+    def get_user_companies(self, username: str) -> list[Company]:
+        result = []
+        cursor = self.connection.cursor()
+        for (
+            c_id,
+            name,
+            website,
+            industry,
+            organization_size,
+            image_uri,
+            cover_image_uri,
+            owner_username,
+        ) in cursor.execute(
+            "SELECT * FROM company WHERE owner_username = ?", (username,)
+        ):
+            company = Company(
+                id=c_id,
+                name=name,
+                website=website,
+                industry=industry,
+                organization_size=organization_size,
+                image_uri=image_uri,
+                cover_image_uri=cover_image_uri,
+                owner_username=owner_username,
+            )
+            result.append(company)
+
+        return result
 
     def create_company(
         self,
@@ -113,13 +155,14 @@ class SqliteCompanyRepository(ICompanyRepository):
         organization_size: OrganizationSize,
         image_uri: str,
         cover_image_uri: str,
+        owner_username: str,
     ) -> Company | None:
         company = None
         cursor = self.connection.cursor()
         cursor.execute(
             "INSERT INTO company (company_name, website, industry, organization_size, "
-            "image_uri, cover_image_uri) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
+            "image_uri, cover_image_uri, owner_username) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
             (
                 name,
                 website,
@@ -127,6 +170,7 @@ class SqliteCompanyRepository(ICompanyRepository):
                 str(organization_size),
                 image_uri,
                 cover_image_uri,
+                owner_username,
             ),
         )
 
@@ -138,6 +182,7 @@ class SqliteCompanyRepository(ICompanyRepository):
             organization_size,
             image_uri,
             cover_image_uri,
+            owner_username,
         ) in cursor.execute("SELECT * FROM company ORDER BY id DESC LIMIT 1;"):
             company = Company(
                 id=c_id,
@@ -146,6 +191,7 @@ class SqliteCompanyRepository(ICompanyRepository):
                 industry=industry,
                 organization_size=organization_size,
                 image_uri=image_uri,
+                owner_username=owner_username,
                 cover_image_uri=cover_image_uri,
             )
         self.connection.commit()

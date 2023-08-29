@@ -20,7 +20,6 @@ class ApplicationService:
 
     def create_application(
         self,
-        account: Account,
         location: JobLocation,
         job_type: JobType,
         experience_level: ExperienceLevel,

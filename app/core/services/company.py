@@ -2,12 +2,14 @@ from dataclasses import dataclass
 
 from app.core.constants import Status
 from app.core.models import Account, Application, Company, Industry, OrganizationSize
+from app.core.repository.account import IAccountRepository
 from app.core.repository.company import ICompanyRepository
 
 
 @dataclass
 class CompanyService:
     company_repository: ICompanyRepository
+    account_repository: IAccountRepository
 
     def get_company(self, company_id: int) -> Company | None:
         return self.company_repository.get_company(company_id=company_id)
@@ -20,7 +22,11 @@ class CompanyService:
         organization_size: OrganizationSize,
         image_uri: str,
         cover_image_uri: str,
+        owner_username: str,
     ) -> tuple[Status, Company | None]:
+        if not self.account_repository.has_account(username=owner_username):
+            return Status.ACCOUNT_DOES_NOT_EXIST, None
+
         company = self.company_repository.create_company(
             name=name,
             website=website,
@@ -28,7 +34,9 @@ class CompanyService:
             organization_size=organization_size,
             image_uri=image_uri,
             cover_image_uri=cover_image_uri,
+            owner_username=owner_username,
         )
+
         if company is None:
             return Status.ERROR_CREATING_COMPANY, company
 
@@ -45,7 +53,7 @@ class CompanyService:
         image_uri: str,
         cover_image_uri: str,
     ) -> tuple[Status, Company | None]:
-        if company_id not in account.companies:
+        if not account.has_company_with_id(company_id=company_id):
             return Status.COMPANY_DOES_NOT_EXIST, None
 
         company = self.company_repository.update_company(
@@ -63,7 +71,7 @@ class CompanyService:
         return Status.OK, company
 
     def delete_company(self, account: Account, company_id: int) -> Status:
-        if company_id not in account.companies:
+        if not account.has_company_with_id(company_id=company_id):
             return Status.COMPANY_DOES_NOT_EXIST
 
         if self.company_repository.delete_company(company_id=company_id):
