@@ -225,6 +225,18 @@ async def update_preferences(
         application_context: IApplicationContext = Depends(get_application_context),
 ):
     account = application_context.get_current_user(token=token)
+    # TODO: implement
+
+
+@app.put("/preferences", response_model=User)
+async def get_preferences(
+        response: Response,
+        token: Annotated[str, Depends(oauth2_scheme)],
+        core: Core = Depends(get_core),
+        application_context: IApplicationContext = Depends(get_application_context),
+):
+    account = application_context.get_current_user(token=token)
+    # TODO: implement
 
 
 @app.post("/application", response_model=ApplicationId)
