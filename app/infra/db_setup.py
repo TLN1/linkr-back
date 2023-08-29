@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import os
 import sqlite3
 from dataclasses import dataclass, field
 from pathlib import Path
 from sqlite3 import Connection, Cursor
 
-DB_PATH = Path("..").joinpath("app.db")
-
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = Path(BASE_DIR).joinpath("..").joinpath("app.db")
 
 @dataclass
 class ConnectionProvider:
