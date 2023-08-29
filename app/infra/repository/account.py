@@ -56,6 +56,7 @@ class SqliteAccountRepository(IAccountRepository):
         )
 
         self.connection.commit()
+        cursor.close()
 
         if res.rowcount == 0:
             return None
@@ -70,6 +71,8 @@ class SqliteAccountRepository(IAccountRepository):
         row = res.fetchone()
         if row is None:
             return None
+
+        cursor.close()
 
         username, password = row
         companies = self.company_repository.get_user_companies(username=username)

@@ -1,37 +1,33 @@
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
+# TODO: maybe replace Enums with StrEnums?
+
 
 # TODO: ADD VALUES
-class Industry(Enum):
+class Industry(StrEnum):
     SOFTWARE_ENGINEERING = "Software Engineering"
 
-    def __str__(self) -> str:
-        return self.value
-
 
 # TODO: ADD VALUES
-class OrganizationSize(Enum):
+class OrganizationSize(StrEnum):
     SMALL = "1-10 employees"
 
-    def __str__(self) -> str:
-        return self.value
 
-
-class JobLocation(Enum):
+class JobLocation(StrEnum):
     ON_SITE = "on-site"
     REMOTE = "remote"
 
 
-class JobType(Enum):
+class JobType(StrEnum):
     PART_TIME = "part-time"
     FULL_TIME = "full-time"
 
 
-class ExperienceLevel(Enum):
+class ExperienceLevel(StrEnum):
     INTERN = "intern"
     JUNIOR = "junior"
     MIDDLE = "middle"

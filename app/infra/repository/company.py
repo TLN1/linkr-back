@@ -256,6 +256,7 @@ class SqliteCompanyRepository(ICompanyRepository):
 
     def delete_company(self, company_id: int) -> bool:
         cursor = self.connection.cursor()
+        cursor.execute("PRAGMA foreign_keys = ON;")
         cursor.execute("DELETE FROM company WHERE id = ?", [company_id])
         self.connection.commit()
         cursor.close()

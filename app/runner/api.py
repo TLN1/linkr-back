@@ -48,7 +48,7 @@ from app.infra.application_context import (
 from app.infra.auth_utils import oauth2_scheme, pwd_context
 from app.infra.db_setup import ConnectionProvider
 from app.infra.repository.account import SqliteAccountRepository
-from app.infra.repository.application import InMemoryApplicationRepository
+from app.infra.repository.application import SqliteApplicationRepository
 from app.infra.repository.company import SqliteCompanyRepository
 from app.infra.repository.user import InMemoryUserRepository
 
@@ -74,7 +74,9 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
 user_repository = InMemoryUserRepository()
-application_repository = InMemoryApplicationRepository()
+application_repository = SqliteApplicationRepository(
+    connection=ConnectionProvider.get_connection()
+)
 company_repository = SqliteCompanyRepository(
     application_repository=application_repository,
     connection=ConnectionProvider.get_connection(),
@@ -403,7 +405,7 @@ def get_company(
     _: Annotated[str, Depends(oauth2_scheme)],
     response: Response,
     company_id: int,
-    core: Core = Depends(get_core)
+    core: Core = Depends(get_core),
 ) -> BaseModel:
     company_response = core.get_company(company_id=company_id)
     handle_response_status_code(response, company_response)

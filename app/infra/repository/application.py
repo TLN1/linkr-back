@@ -1,4 +1,6 @@
 from dataclasses import dataclass, field
+from sqlite3 import Connection
+from typing import Any
 
 from app.core.models import Application, ExperienceLevel, JobLocation, JobType
 from app.core.repository.application import IApplicationRepository
@@ -82,3 +84,164 @@ class InMemoryApplicationRepository(IApplicationRepository):
 
         self.applications.pop(id)
         return True
+
+
+@dataclass
+class SqliteApplicationRepository(IApplicationRepository):
+    connection: Connection
+
+    @staticmethod
+    def _convert_row(row: Any) -> Application | None:
+        (
+            id,
+            location,
+            job_type,
+            experience_level,
+            description,
+            views,
+            company_id,
+        ) = row
+
+        return Application(
+            id=id,
+            location=location,
+            job_type=job_type,
+            experience_level=experience_level,
+            description=description,
+            views=views,
+            company_id=company_id,
+        )
+
+    @staticmethod
+    def _convert_rows(rows: Any) -> list[Application]:
+        result = []
+
+        for row in rows:
+            application = SqliteApplicationRepository._convert_row(row=row)
+
+            if application is not None:
+                result.append(application)
+
+        return result
+
+    def create_application(
+        self,
+        location: JobLocation,
+        job_type: JobType,
+        experience_level: ExperienceLevel,
+        description: str,
+        company_id: int,
+    ) -> Application | None:
+        cursor = self.connection.cursor()
+
+        res = cursor.execute(
+            "INSERT INTO application "
+            "(location, job_type, experience_level, description, views, company_id) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (location, job_type, experience_level, description, 0, company_id),
+        )
+
+        self.connection.commit()
+
+        if res.rowcount == 0 or res.lastrowid is None:
+            cursor.close()
+            return None
+
+        res = cursor.execute(
+            "SELECT * FROM application WHERE ROWID = ?", [res.lastrowid]
+        )
+
+        row = res.fetchone()
+        if row is None:
+            return None
+
+        cursor.close()
+        return SqliteApplicationRepository._convert_row(row=row)
+
+    def get_application(self, id: int) -> Application | None:
+        cursor = self.connection.cursor()
+        res = cursor.execute("SELECT * FROM application WHERE id = ?", [id])
+
+        row = res.fetchone()
+        if row is None:
+            return None
+
+        cursor.close()
+        return SqliteApplicationRepository._convert_row(row=row)
+
+    def get_company_applications(self, company_id: int) -> list[Application]:
+        cursor = self.connection.cursor()
+
+        res = cursor.execute(
+            "SELECT * FROM application WHERE company_id = ?", [company_id]
+        )
+
+        rows = res.fetchall()
+        if rows is None:
+            return []
+
+        cursor.close()
+        return SqliteApplicationRepository._convert_rows(rows=rows)
+
+    def has_application(self, id: int) -> bool:
+        return self.get_application(id=id) is not None
+
+    def update_application(
+        self,
+        id: int,
+        location: JobLocation,
+        job_type: JobType,
+        experience_level: ExperienceLevel,
+        description: str,
+    ) -> Application | None:
+        application = self.get_application(id=id)
+
+        if application is None:
+            return None
+
+        cursor = self.connection.cursor()
+
+        res = cursor.execute(
+            "UPDATE application "
+            "   SET location = ?, "
+            "       job_type = ?, "
+            "       experience_level = ?, "
+            "       description = ?"
+            " WHERE id = ?",
+            (location, job_type, experience_level, description, id),
+        )
+
+        self.connection.commit()
+        cursor.close()
+
+        if res.rowcount == 0:
+            return None
+
+        return self.get_application(id=id)
+
+    def application_interaction(self, id: int) -> bool:
+        application = self.get_application(id=id)
+
+        if application is None:
+            return False
+
+        cursor = self.connection.cursor()
+
+        res = cursor.execute(
+            "UPDATE application SET views = ? WHERE id = ?", (application.views + 1, id)
+        )
+
+        self.connection.commit()
+        cursor.close()
+
+        return res.rowcount != 0
+
+    def delete_application(self, id: int) -> bool:
+        cursor = self.connection.cursor()
+
+        res = cursor.execute("DELETE FROM application WHERE id = ?", [id])
+
+        self.connection.commit()
+        cursor.close()
+
+        return res.rowcount != 0
