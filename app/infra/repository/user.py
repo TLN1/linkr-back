@@ -1,8 +1,9 @@
 import json
 from dataclasses import dataclass, field
 from sqlite3 import Connection
+from typing import Any
 
-from app.core.models import User, Preference
+from app.core.models import Preference, User
 from app.core.repository.user import IUserRepository
 
 
@@ -39,7 +40,7 @@ class InMemoryUserRepository(IUserRepository):
 class SqliteUserRepository(IUserRepository):
     connection: Connection
 
-    def _deserialize_lists(self, user_data):
+    def _deserialize_lists(self, user_data: Any) -> Any:
         user_data["education"] = json.loads(user_data["education"])
         user_data["skills"] = json.loads(user_data["skills"])
         user_data["experience"] = json.loads(user_data["experience"])

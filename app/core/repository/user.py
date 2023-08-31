@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from app.core.models import User, Preference
+from app.core.models import Preference, User
 
 
 class IUserRepository(Protocol):

@@ -4,13 +4,16 @@ from dataclasses import dataclass, field
 from app.core.models import (
     Account,
     Benefit,
+    Education,
+    Experience,
     ExperienceLevel,
     Industry,
     JobLocation,
     JobType,
     OrganizationSize,
     Requirement,
-    User, Education, Skill, Experience,
+    Skill,
+    User,
 )
 
 

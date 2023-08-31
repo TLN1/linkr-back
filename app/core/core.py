@@ -3,7 +3,13 @@ from dataclasses import dataclass
 from pydantic import BaseModel
 
 from app.core.constants import Status
-from app.core.models import Account, ApplicationId, Industry, OrganizationSize, Preference
+from app.core.models import (
+    Account,
+    ApplicationId,
+    Industry,
+    OrganizationSize,
+    Preference,
+)
 from app.core.requests import (
     ApplicationInteractionRequest,
     CreateApplicationRequest,
@@ -11,7 +17,8 @@ from app.core.requests import (
     GetApplicationRequest,
     RegisterRequest,
     SetupUserRequest,
-    UpdateApplicationRequest, UpdatePreferencesRequest,
+    UpdateApplicationRequest,
+    UpdatePreferencesRequest,
 )
 from app.core.responses import CoreResponse
 from app.core.services.account import AccountService
@@ -60,11 +67,17 @@ class Core:
 
         return CoreResponse(status=status, response_content=user)
 
-    def update_preferences(self, account: Account, request: UpdatePreferencesRequest):
+    def update_preferences(
+        self, account: Account, request: UpdatePreferencesRequest
+    ) -> CoreResponse:
         status, user = self.user_service.update_preferences(
             account=account,
-            preferences=Preference(industry=request.industry, job_type=request.job_type,
-                                   job_location=request.job_location, experience_level=request.experience_level)
+            preferences=Preference(
+                industry=request.industry,
+                job_type=request.job_type,
+                job_location=request.job_location,
+                experience_level=request.experience_level,
+            ),
         )
 
         # TODO: check this part
@@ -124,7 +137,7 @@ class Core:
         return CoreResponse(status=status, response_content=application)
 
     def application_interaction(
-            self, request: ApplicationInteractionRequest
+        self, request: ApplicationInteractionRequest
     ) -> CoreResponse:
         status = self.application_service.application_interaction(
             account=request.account, id=request.id
@@ -138,14 +151,14 @@ class Core:
         return CoreResponse(status=status)
 
     def create_company(
-            self,
-            account: Account,
-            name: str,
-            website: str,
-            industry: Industry,
-            organization_size: OrganizationSize,
-            image_uri: str,
-            cover_image_uri: str,
+        self,
+        account: Account,
+        name: str,
+        website: str,
+        industry: Industry,
+        organization_size: OrganizationSize,
+        image_uri: str,
+        cover_image_uri: str,
     ) -> CoreResponse:
         status, company = self.company_service.create_company(
             name=name,
@@ -172,15 +185,15 @@ class Core:
         return CoreResponse(status=Status.OK, response_content=company)
 
     def update_company(
-            self,
-            account: Account,
-            company_id: int,
-            name: str,
-            website: str,
-            industry: Industry,
-            organization_size: OrganizationSize,
-            image_uri: str,
-            cover_image_uri: str,
+        self,
+        account: Account,
+        company_id: int,
+        name: str,
+        website: str,
+        industry: Industry,
+        organization_size: OrganizationSize,
+        image_uri: str,
+        cover_image_uri: str,
     ) -> CoreResponse:
         status, company = self.company_service.update_company(
             account=account,

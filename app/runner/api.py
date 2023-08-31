@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 
 from app.core.application_context import IApplicationContext
-from app.core.constants import STATUS_HTTP_MAPPING, Status
+from app.core.constants import STATUS_HTTP_MAPPING
 from app.core.core import Core
 from app.core.models import (
     Account,
@@ -15,8 +15,6 @@ from app.core.models import (
     ApplicationId,
     Benefit,
     Company,
-    Education,
-    Experience,
     ExperienceLevel,
     Industry,
     JobLocation,
@@ -24,7 +22,6 @@ from app.core.models import (
     OrganizationSize,
     Preference,
     Requirement,
-    Skill,
     Token,
     User,
 )
@@ -36,7 +33,9 @@ from app.core.requests import (
     GetApplicationRequest,
     RegisterRequest,
     SetupUserRequest,
-    UpdateApplicationRequest, UpdateUserRequest, UpdatePreferencesRequest,
+    UpdateApplicationRequest,
+    UpdatePreferencesRequest,
+    UpdateUserRequest,
 )
 from app.core.responses import CoreResponse
 from app.core.services.account import AccountService
@@ -110,7 +109,7 @@ def get_core() -> Core:
 
 
 def handle_response_status_code(
-        response: Response, core_response: CoreResponse
+    response: Response, core_response: CoreResponse
 ) -> None:
     response.status_code = STATUS_HTTP_MAPPING[core_response.status]
 
@@ -123,17 +122,17 @@ def handle_response_status_code(
 # TODO: get current user with depends
 @app.get("/users/me")
 async def read_users_me(
-        # current_user: Annotated[User, Depends(get_current_user)]):
-        token: Annotated[str, Depends(oauth2_scheme)],
-        application_context: IApplicationContext = Depends(get_application_context),
+    # current_user: Annotated[User, Depends(get_current_user)]):
+    token: Annotated[str, Depends(oauth2_scheme)],
+    application_context: IApplicationContext = Depends(get_application_context),
 ) -> Account:
     return application_context.get_current_user(token)
 
 
 @app.post("/token", response_model=Token)
 async def login_for_access_token(
-        form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-        application_context: IApplicationContext = Depends(get_application_context),
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    application_context: IApplicationContext = Depends(get_application_context),
 ) -> Token:
     user = application_context.authenticate_user(form_data.username, form_data.password)
     access_token = application_context.create_access_token(account=user)
@@ -151,9 +150,9 @@ async def login_for_access_token(
     response_model=Account,
 )
 def register(
-        response: Response,
-        form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-        core: Core = Depends(get_core),
+    response: Response,
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    core: Core = Depends(get_core),
 ) -> BaseModel:
     """
     - Registers user
@@ -178,10 +177,10 @@ def register(
 # TODO: need to change url
 @app.get("/user", response_model=User)
 def get_user(
-        response: Response,
-        token: Annotated[str, Depends(oauth2_scheme)],
-        core: Core = Depends(get_core),
-        application_context: IApplicationContext = Depends(get_application_context)
+    response: Response,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    core: Core = Depends(get_core),
+    application_context: IApplicationContext = Depends(get_application_context),
 ) -> BaseModel:
     account = application_context.get_current_user(token=token)
 
@@ -192,11 +191,11 @@ def get_user(
 
 @app.put("/user/update", response_model=User)
 async def update_user(
-        response: Response,
-        update_user_request: UpdateUserRequest,
-        token: Annotated[str, Depends(oauth2_scheme)],
-        core: Core = Depends(get_core),
-        application_context: IApplicationContext = Depends(get_application_context),
+    response: Response,
+    update_user_request: UpdateUserRequest,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    core: Core = Depends(get_core),
+    application_context: IApplicationContext = Depends(get_application_context),
 ) -> BaseModel:
     account = application_context.get_current_user(token=token)
 
@@ -218,31 +217,33 @@ async def update_user(
 
 @app.put("/preferences/update", response_model=Preference)
 async def update_preferences(
-        response: Response,
-        update_preferences_request: UpdatePreferencesRequest,
-        token: Annotated[str, Depends(oauth2_scheme)],
-        core: Core = Depends(get_core),
-        application_context: IApplicationContext = Depends(get_application_context),
-):
+    response: Response,
+    update_preferences_request: UpdatePreferencesRequest,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    core: Core = Depends(get_core),
+    application_context: IApplicationContext = Depends(get_application_context),
+) -> BaseModel:
     account = application_context.get_current_user(token=token)
 
-    update_preferences_response = core.update_preferences(account=account, request=update_preferences_request)
+    update_preferences_response = core.update_preferences(
+        account=account, request=update_preferences_request
+    )
     handle_response_status_code(response, update_preferences_response)
     return update_preferences_response.response_content
 
 
 @app.post("/application", response_model=ApplicationId)
 async def create_application(
-        response: Response,
-        location: JobLocation,
-        job_type: JobType,
-        experience_level: ExperienceLevel,
-        requirements: list[Requirement],
-        benefits: list[Benefit],
-        company_id: int,
-        token: Annotated[str, Depends(oauth2_scheme)],
-        core: Core = Depends(get_core),
-        application_context: IApplicationContext = Depends(get_application_context),
+    response: Response,
+    location: JobLocation,
+    job_type: JobType,
+    experience_level: ExperienceLevel,
+    requirements: list[Requirement],
+    benefits: list[Benefit],
+    company_id: int,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    core: Core = Depends(get_core),
+    application_context: IApplicationContext = Depends(get_application_context),
 ) -> BaseModel:
     """
     - Creates application
@@ -268,11 +269,11 @@ async def create_application(
 
 @app.get("/application/{application_id}", response_model=Application)
 async def get_application(
-        response: Response,
-        application_id: int,
-        token: Annotated[str, Depends(oauth2_scheme)],
-        core: Core = Depends(get_core),
-        application_context: IApplicationContext = Depends(get_application_context),
+    response: Response,
+    application_id: int,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    core: Core = Depends(get_core),
+    application_context: IApplicationContext = Depends(get_application_context),
 ) -> BaseModel:
     """
     - Obtains application with application id
@@ -289,16 +290,16 @@ async def get_application(
 
 @app.put("/application/{application_id}/update")
 async def update_application(
-        response: Response,
-        application_id: int,
-        location: JobLocation,
-        job_type: JobType,
-        experience_level: ExperienceLevel,
-        requirements: list[Requirement],
-        benefits: list[Benefit],
-        token: Annotated[str, Depends(oauth2_scheme)],
-        application_context: IApplicationContext = Depends(get_application_context),
-        core: Core = Depends(get_core),
+    response: Response,
+    application_id: int,
+    location: JobLocation,
+    job_type: JobType,
+    experience_level: ExperienceLevel,
+    requirements: list[Requirement],
+    benefits: list[Benefit],
+    token: Annotated[str, Depends(oauth2_scheme)],
+    application_context: IApplicationContext = Depends(get_application_context),
+    core: Core = Depends(get_core),
 ) -> BaseModel:
     """
     - Update application
@@ -323,11 +324,11 @@ async def update_application(
 
 @app.put("/application/{application_id}/interaction")
 async def application_interaction(
-        response: Response,
-        application_id: int,
-        token: Annotated[str, Depends(oauth2_scheme)],
-        application_context: IApplicationContext = Depends(get_application_context),
-        core: Core = Depends(get_core),
+    response: Response,
+    application_id: int,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    application_context: IApplicationContext = Depends(get_application_context),
+    core: Core = Depends(get_core),
 ) -> BaseModel:
     """
     - Saves interaction with application
@@ -344,11 +345,11 @@ async def application_interaction(
 
 @app.delete("/application/{application_id}")
 async def delete_application(
-        response: Response,
-        application_id: int,
-        token: Annotated[str, Depends(oauth2_scheme)],
-        application_context: IApplicationContext = Depends(get_application_context),
-        core: Core = Depends(get_core),
+    response: Response,
+    application_id: int,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    application_context: IApplicationContext = Depends(get_application_context),
+    core: Core = Depends(get_core),
 ) -> BaseModel:
     """
     - Deletes application
@@ -373,12 +374,12 @@ def get_job_locations() -> list[str]:
 
 
 @app.get("/job_type", responses={200: {}})
-def get_industries() -> list[str]:
+def get_job_types() -> list[str]:
     return [j.value for j in JobType]
 
 
 @app.get("/experience_level", responses={200: {}})
-def get_industries() -> list[str]:
+def get_experience_level() -> list[str]:
     return [e.value for e in ExperienceLevel]
 
 
@@ -397,11 +398,11 @@ def get_organization_sizes() -> list[str]:
     response_model=Company,
 )
 def create_company(
-        response: Response,
-        request: CreateCompanyRequest,
-        token: Annotated[str, Depends(oauth2_scheme)],
-        application_context: IApplicationContext = Depends(get_application_context),
-        core: Core = Depends(get_core),
+    response: Response,
+    request: CreateCompanyRequest,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    application_context: IApplicationContext = Depends(get_application_context),
+    core: Core = Depends(get_core),
 ) -> BaseModel:
     """
     - Registers company
@@ -430,9 +431,9 @@ def create_company(
     response_model=Company,
 )
 def get_company(
-        response: Response,
-        company_id: int,
-        core: Core = Depends(get_core),
+    response: Response,
+    company_id: int,
+    core: Core = Depends(get_core),
 ) -> BaseModel:
     company_response = core.get_company(company_id=company_id)
     handle_response_status_code(response, company_response)
@@ -449,12 +450,12 @@ def get_company(
     response_model=Company,
 )
 def update_company(
-        response: Response,
-        company_id: int,
-        request: CreateCompanyRequest,
-        token: Annotated[str, Depends(oauth2_scheme)],
-        application_context: IApplicationContext = Depends(get_application_context),
-        core: Core = Depends(get_core),
+    response: Response,
+    company_id: int,
+    request: CreateCompanyRequest,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    application_context: IApplicationContext = Depends(get_application_context),
+    core: Core = Depends(get_core),
 ) -> BaseModel:
     account = application_context.get_current_user(token)
 
@@ -478,11 +479,11 @@ def update_company(
     responses={200: {}, 404: {}, 500: {}},
 )
 def delete_company(
-        response: Response,
-        company_id: int,
-        token: Annotated[str, Depends(oauth2_scheme)],
-        application_context: IApplicationContext = Depends(get_application_context),
-        core: Core = Depends(get_core),
+    response: Response,
+    company_id: int,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    application_context: IApplicationContext = Depends(get_application_context),
+    core: Core = Depends(get_core),
 ) -> None:
     account = application_context.get_current_user(token)
     delete_response = core.delete_company(account=account, company_id=company_id)
