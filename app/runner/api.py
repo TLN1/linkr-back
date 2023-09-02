@@ -181,16 +181,15 @@ def register(
 
 
 # TODO: need to change url
-@app.get("/user", response_model=User)
+@app.get("/user/{username}", response_model=User)
 def get_user(
     response: Response,
-    token: Annotated[str, Depends(oauth2_scheme)],
+    username: str,
     core: Core = Depends(get_core),
     application_context: IApplicationContext = Depends(get_application_context)
 ) -> BaseModel:
-    account = application_context.get_current_user(token=token)
 
-    get_user_response = core.get_user(username=account.username)
+    get_user_response = core.get_user(username=username)
     handle_response_status_code(response, get_user_response)
     return get_user_response.response_content
 

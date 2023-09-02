@@ -26,7 +26,7 @@ class InMemoryUserRepository(IUserRepository):
         return self.users.get(username)
 
     def has_user(self, username: str) -> bool:
-        return username in self.users
+        return self.get_user(username=username) is not None
 
 
 @dataclass
