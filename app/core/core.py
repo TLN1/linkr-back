@@ -66,23 +66,15 @@ class Core:
             return get_company_response
 
         status, application = self.application_service.create_application(
-            account=request.account,
             location=request.location,
             job_type=request.job_type,
             experience_level=request.experience_level,
-            requirements=request.requirements,
-            benefits=request.benefits,
+            description=request.description,
+            company_id=request.company_id,
         )
 
         if status != Status.OK or application is None:
             return CoreResponse(status)
-
-        self.account_service.link_application(
-            account=request.account, application=application
-        )
-        self.company_service.link_application(
-            company_id=request.company_id, application=application
-        )
 
         return CoreResponse(
             status=status, response_content=ApplicationId(application_id=application.id)
@@ -96,13 +88,11 @@ class Core:
 
     def update_application(self, request: UpdateApplicationRequest) -> CoreResponse:
         status, application = self.application_service.update_application(
-            account=request.account,
             id=request.id,
             location=request.location,
             job_type=request.job_type,
             experience_level=request.experience_level,
-            requirements=request.requirements,
-            benefits=request.benefits,
+            description=request.description,
         )
 
         if status != Status.OK or application is None:
@@ -113,15 +103,11 @@ class Core:
     def application_interaction(
         self, request: ApplicationInteractionRequest
     ) -> CoreResponse:
-        status = self.application_service.application_interaction(
-            account=request.account, id=request.id
-        )
+        status = self.application_service.application_interaction(id=request.id)
         return CoreResponse(status=status)
 
     def delete_application(self, request: DeleteApplicationRequest) -> CoreResponse:
-        status = self.application_service.delete_application(
-            account=request.account, id=request.id
-        )
+        status = self.application_service.delete_application(id=request.id)
         return CoreResponse(status=status)
 
     def create_company(
@@ -141,13 +127,11 @@ class Core:
             organization_size=organization_size,
             image_uri=image_uri,
             cover_image_uri=cover_image_uri,
+            owner_username=account.username,
         )
 
         if company is None:
             return CoreResponse(status=status)
-
-        status = self.account_service.link_company(account=account, company=company)
-        # TODO: what if error occurred during linking company with account
 
         return CoreResponse(status=status, response_content=company)
 

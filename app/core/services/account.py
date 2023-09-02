@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from app.core.constants import Status
-from app.core.models import Account, Application, Company
+from app.core.models import Account
 from app.core.repository.account import IAccountRepository
 
 
@@ -22,19 +22,3 @@ class AccountService:
         status = Status.ACCOUNT_REGISTER_ERROR if account is None else Status.OK
 
         return status, account
-
-    def link_company(self, account: Account, company: Company) -> Status:
-        if not self.account_repository.link_company(
-            username=account.username, company=company
-        ):
-            return Status.ERROR_CREATING_COMPANY
-
-        return Status.OK
-
-    def link_application(self, account: Account, application: Application) -> Status:
-        if not self.account_repository.link_application(
-            username=account.username, application=application
-        ):
-            return Status.APPLICATION_CREATE_ERROR
-
-        return Status.OK

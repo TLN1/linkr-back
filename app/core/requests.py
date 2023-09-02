@@ -3,13 +3,11 @@ from dataclasses import dataclass, field
 # TODO maybe implement builder pattern for building requests
 from app.core.models import (
     Account,
-    Benefit,
     ExperienceLevel,
     Industry,
     JobLocation,
     JobType,
     OrganizationSize,
-    Requirement,
     User, Education, Skill, Experience,
 )
 
@@ -52,8 +50,7 @@ class CreateApplicationRequest(AccountRequest):
     location: JobLocation = JobLocation.ON_SITE
     job_type: JobType = JobType.FULL_TIME
     experience_level: ExperienceLevel = ExperienceLevel.JUNIOR
-    requirements: list[Requirement] = field(default_factory=list)
-    benefits: list[Benefit] = field(default_factory=list)
+    description: str = ""
     company_id: int = 0
 
 
@@ -63,8 +60,7 @@ class UpdateApplicationRequest(AccountRequest):
     location: JobLocation = JobLocation.ON_SITE
     job_type: JobType = JobType.FULL_TIME
     experience_level: ExperienceLevel = ExperienceLevel.JUNIOR
-    requirements: list[Requirement] = field(default_factory=list)
-    benefits: list[Benefit] = field(default_factory=list)
+    description: str = ""
 
 
 @dataclass
