@@ -1,7 +1,8 @@
-from typing import Annotated
+import json
+from typing import Annotated, List
 
 import uvicorn
-from fastapi import Depends, FastAPI, HTTPException, Response
+from fastapi import Depends, FastAPI, HTTPException, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
@@ -460,3 +461,44 @@ def delete_company(
     account = application_context.get_current_user(token)
     delete_response = core.delete_company(account=account, company_id=company_id)
     handle_response_status_code(response, delete_response)
+
+
+class UserConnectionManager:
+    def __init__(self):
+        self.active_connections: dict[str, WebSocket] = {}
+
+    async def connect(self, username: str, websocket: WebSocket):
+        await websocket.accept()
+        if not self.active_connections.keys().__contains__(username):
+            self.active_connections[username] = websocket
+
+    # def disconnect(self, username: str):
+    #     if username in self.active_connections:
+    #         del self.active_connections[username]
+
+    async def send_personal_message(self, username: str, message: dict):
+        if username in self.active_connections:
+            websocket = self.active_connections[username]
+            await websocket.send_json(message)
+
+    # async def broadcast(self, message: dict):
+    #     for websocket in self.active_connections.values():
+    #         await websocket.send_json(message)
+
+    # async def get_connected_users(self) -> List[int]:
+    #     return list(self.active_connections.keys())
+
+
+manager = UserConnectionManager()
+
+
+@app.websocket("/register/ws/{username}")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket.path_params.get("username"), websocket)
+    while True:
+        data = await websocket.receive_text()
+        message_data = json.loads(data)
+        user = message_data.get('user')
+        time = message_data.get('time')
+        text = message_data.get('text')
+        await manager.send_personal_message(username=user, message={user: websocket.base_url.username, time: time, text: text})
