@@ -12,16 +12,20 @@ class ApplicationService:
 
     def create_application(
         self,
+        title: str,
         location: JobLocation,
         job_type: JobType,
         experience_level: ExperienceLevel,
+        skills: list[str],
         description: str,
         company_id: int,
     ) -> tuple[Status, Application | None]:
         application = self.application_repository.create_application(
+            title=title,
             location=location,
             job_type=job_type,
             experience_level=experience_level,
+            skills=skills,
             description=description,
             company_id=company_id,
         )
@@ -41,9 +45,11 @@ class ApplicationService:
     def update_application(
         self,
         id: int,
+        title: str,
         location: JobLocation,
         job_type: JobType,
         experience_level: ExperienceLevel,
+        skills: list[str],
         description: str,
     ) -> tuple[Status, Application | None]:
         if not self.application_repository.has_application(id=id):
@@ -51,9 +57,11 @@ class ApplicationService:
 
         application = self.application_repository.update_application(
             id=id,
+            title=title,
             location=location,
             job_type=job_type,
             experience_level=experience_level,
+            skills=skills,
             description=description,
         )
 
@@ -79,3 +87,6 @@ class ApplicationService:
             return Status.APPLICATION_DELETE_ERROR
 
         return Status.OK
+
+    def get_applications(self, company_id: int) -> list[Application]:
+        return self.application_repository.get_company_applications(company_id)

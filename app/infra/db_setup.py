@@ -51,10 +51,12 @@ def create_tables(cursor: Cursor, connection: Connection) -> None:
     cursor.execute(
         "CREATE TABLE IF NOT EXISTS application "
         "(id INTEGER PRIMARY KEY,"
+        " title TEXT,"
         " location TEXT,"
         " job_type TEXT,"
         " experience_level TEXT,"
         " description TEXT,"
+        " skills TEXT,"
         " views INTEGER,"
         " company_id INTEGER,"
         " FOREIGN KEY (company_id) "

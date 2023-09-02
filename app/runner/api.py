@@ -225,11 +225,7 @@ async def update_user(
 @app.post("/application", response_model=ApplicationId)
 async def create_application(
     response: Response,
-    location: JobLocation,
-    job_type: JobType,
-    experience_level: ExperienceLevel,
-    description: str,
-    company_id: int,
+    request: CreateApplicationRequest,
     token: Annotated[str, Depends(oauth2_scheme)],
     core: Core = Depends(get_core),
     application_context: IApplicationContext = Depends(get_application_context),
@@ -240,16 +236,7 @@ async def create_application(
     """
     account = application_context.get_current_user(token)
 
-    create_application_response = core.create_application(
-        CreateApplicationRequest(
-            account=account,
-            location=location,
-            job_type=job_type,
-            experience_level=experience_level,
-            description=description,
-            company_id=company_id,
-        )
-    )
+    create_application_response = core.create_application(account=account, request=request)
 
     handle_response_status_code(response, create_application_response)
     return create_application_response.response_content
@@ -280,10 +267,7 @@ async def get_application(
 async def update_application(
     response: Response,
     application_id: int,
-    location: JobLocation,
-    job_type: JobType,
-    experience_level: ExperienceLevel,
-    description: str,
+    request: UpdateApplicationRequest,
     token: Annotated[str, Depends(oauth2_scheme)],
     application_context: IApplicationContext = Depends(get_application_context),
     core: Core = Depends(get_core),
@@ -294,14 +278,8 @@ async def update_application(
     account = application_context.get_current_user(token)
 
     update_application_response = core.update_application(
-        UpdateApplicationRequest(
-            account=account,
-            id=application_id,
-            location=location,
-            job_type=job_type,
-            experience_level=experience_level,
-            description=description,
-        )
+        account=account,
+        request=request
     )
 
     handle_response_status_code(response, update_application_response)
@@ -327,6 +305,18 @@ async def application_interaction(
 
     handle_response_status_code(response, application_interaction_response)
     return application_interaction_response.response_content
+
+
+@app.get("/company/{company_id}/application")
+def get_company_applications(
+        response: Response,
+        company_id: int,
+        core: Core = Depends(get_core)
+) -> BaseModel:
+    applications_response = core.get_applications(company_id)
+    handle_response_status_code(response, applications_response)
+
+    return applications_response.response_content
 
 
 @app.delete("/application/{application_id}")
@@ -357,6 +347,11 @@ def get_industries() -> list[str]:
 @app.get("/organization-size", responses={200: {}})
 def get_organization_sizes() -> list[str]:
     return [e.value for e in OrganizationSize]
+
+
+@app.get("/experience-level", responses={200: {}})
+def get_experience_levels() -> list[str]:
+    return [e.value for e in ExperienceLevel]
 
 
 @app.post(

@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 # TODO maybe implement builder pattern for building requests
 from app.core.models import (
@@ -46,21 +46,25 @@ class LogoutRequest(AccountRequest):
 
 
 @dataclass
-class CreateApplicationRequest(AccountRequest):
-    location: JobLocation = JobLocation.ON_SITE
-    job_type: JobType = JobType.FULL_TIME
-    experience_level: ExperienceLevel = ExperienceLevel.JUNIOR
-    description: str = ""
-    company_id: int = 0
+class CreateApplicationRequest:
+    title: str
+    company_id: int
+    location: JobLocation
+    job_type: JobType
+    experience_level: ExperienceLevel
+    description: str
+    skills: list[str] = field(default_factory=list)
 
 
 @dataclass
-class UpdateApplicationRequest(AccountRequest):
+class UpdateApplicationRequest:
     id: int
-    location: JobLocation = JobLocation.ON_SITE
-    job_type: JobType = JobType.FULL_TIME
-    experience_level: ExperienceLevel = ExperienceLevel.JUNIOR
-    description: str = ""
+    title: str
+    location: JobLocation
+    job_type: JobType
+    experience_level: ExperienceLevel
+    skills: list[str]
+    description: str
 
 
 @dataclass
