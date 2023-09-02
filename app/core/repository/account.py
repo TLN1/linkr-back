@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from app.core.models import Account, Application, Company
+from app.core.models import Account
 
 
 class IAccountRepository(Protocol):
@@ -14,10 +14,4 @@ class IAccountRepository(Protocol):
         pass
 
     def is_valid(self, username: str, password: str) -> bool:
-        pass
-
-    def link_company(self, username: str, company: Company) -> bool:
-        pass
-
-    def link_application(self, username: str, application: Application) -> bool:
         pass

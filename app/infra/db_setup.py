@@ -9,6 +9,7 @@ from sqlite3 import Connection, Cursor
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = Path(BASE_DIR).joinpath("..").joinpath("app.db")
 
+
 @dataclass
 class ConnectionProvider:
     _connection: Connection | None = field(default=None, init=False)
@@ -22,20 +23,43 @@ class ConnectionProvider:
 
 
 def create_tables(cursor: Cursor, connection: Connection) -> None:
-    # cursor.execute("DROP TABLE IF EXISTS accounts;")
-    #
-    # cursor.execute(
-    #     "CREATE TABLE IF NOT EXISTS accounts (id INT, username TEXT, "
-    #     "password TEXT, token TEXT, token_is_valid INT);"
-    # )
-
+    cursor.execute("DROP TABLE IF EXISTS account;")
     cursor.execute("DROP TABLE IF EXISTS company;")
+    cursor.execute("DROP TABLE IF EXISTS application;")
+
+    cursor.execute(
+        "CREATE TABLE IF NOT EXISTS account "
+        "(username TEXT PRIMARY KEY,"
+        " password TEXT);"
+    )
 
     cursor.execute(
         "CREATE TABLE IF NOT EXISTS company "
-        "(id INTEGER PRIMARY KEY, company_name TEXT, "
-        "website TEXT, industry TEXT, organization_size INT, "
-        "image_uri TEXT, cover_image_uri TEXT);"
+        "(id INTEGER PRIMARY KEY,"
+        " company_name TEXT, "
+        " website TEXT, "
+        " industry TEXT,"
+        " organization_size INTEGER, "
+        " image_uri TEXT,"
+        " cover_image_uri TEXT, "
+        " owner_username TEXT, "
+        " FOREIGN KEY (owner_username) "
+        " REFERENCES account (username) "
+        " ON DELETE CASCADE);"
+    )
+
+    cursor.execute(
+        "CREATE TABLE IF NOT EXISTS application "
+        "(id INTEGER PRIMARY KEY,"
+        " location TEXT,"
+        " job_type TEXT,"
+        " experience_level TEXT,"
+        " description TEXT,"
+        " views INTEGER,"
+        " company_id INTEGER,"
+        " FOREIGN KEY (company_id) "
+        " REFERENCES company (id) "
+        " ON DELETE CASCADE);"
     )
 
     connection.commit()
