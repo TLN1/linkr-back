@@ -501,4 +501,4 @@ async def websocket_endpoint(websocket: WebSocket):
         user = message_data.get('user')
         time = message_data.get('time')
         text = message_data.get('text')
-        await manager.send_personal_message(username=user, message={user: websocket.base_url.username, time: time, text: text})
+        await manager.send_personal_message(username=user, message={"user": websocket.base_url.username, "time": time, "text": text})
