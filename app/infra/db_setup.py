@@ -55,10 +55,12 @@ def create_tables(cursor: Cursor, connection: Connection) -> None:
     cursor.execute(
         "CREATE TABLE IF NOT EXISTS application "
         "(id INTEGER PRIMARY KEY,"
+        " title TEXT,"
         " location TEXT,"
         " job_type TEXT,"
         " experience_level TEXT,"
         " description TEXT,"
+        " skills TEXT,"
         " views INTEGER,"
         " company_id INTEGER,"
         " FOREIGN KEY (company_id) "
@@ -77,6 +79,24 @@ def create_tables(cursor: Cursor, connection: Connection) -> None:
         " FOREIGN KEY (application_id) REFERENCES application (id)"
         ");"
     )
+
+    cursor.execute("DROP TABLE IF EXISTS user;")
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS user (
+            id INTEGER PRIMARY KEY,
+            username TEXT NOT NULL,
+            education TEXT,
+            skills TEXT,
+            experience TEXT
+        )
+    """
+    )
+
+    # TODO: add foreign key after adding account table
+    # account_id INTEGER,
+    # FOREIGN KEY (account_id) REFERENCES account(id),
 
     connection.commit()
 

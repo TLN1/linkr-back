@@ -12,11 +12,13 @@ from app.core.models import (
 class IApplicationRepository(Protocol):
     def create_application(
         self,
+        title: str,
+        experience_level: ExperienceLevel,
         location: JobLocation,
         job_type: JobType,
-        experience_level: ExperienceLevel,
+        skills: list[str],
         description: str,
-        company_id: int,
+        company_id: int
     ) -> Application | None:
         pass
 
@@ -37,9 +39,11 @@ class IApplicationRepository(Protocol):
     def update_application(
         self,
         id: int,
+        title: str,
         location: JobLocation,
         job_type: JobType,
         experience_level: ExperienceLevel,
+        skills: list[str],
         description: str,
     ) -> Application | None:
         pass

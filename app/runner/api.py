@@ -14,8 +14,6 @@ from app.core.models import (
     Application,
     ApplicationId,
     Company,
-    Education,
-    Experience,
     ExperienceLevel,
     Industry,
     JobLocation,
@@ -37,6 +35,7 @@ from app.core.requests import (
     RegisterRequest,
     SetupUserRequest,
     UpdateApplicationRequest,
+    UpdateUserRequest,
 )
 from app.core.responses import CoreResponse
 from app.core.services.account import AccountService
@@ -55,6 +54,7 @@ from app.infra.repository.application import SqliteApplicationRepository
 from app.infra.repository.company import SqliteCompanyRepository
 from app.infra.repository.match import SqliteMatchRepository
 from app.infra.repository.user import InMemoryUserRepository
+from app.infra.repository.user import SqliteUserRepository
 
 app = FastAPI()
 
@@ -77,8 +77,8 @@ app.add_middleware(
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
-user_repository = InMemoryUserRepository()
 match_repository = SqliteMatchRepository(connection=ConnectionProvider.get_connection())
+user_repository = SqliteUserRepository(connection=ConnectionProvider.get_connection())
 application_repository = SqliteApplicationRepository(
     connection=ConnectionProvider.get_connection()
 )
@@ -186,26 +186,24 @@ def register(
 #     return logout_response.response_content
 
 
+# TODO: need to change url
 @app.get("/user/{username}", response_model=User)
 def get_user(
-    _: Annotated[str, Depends(oauth2_scheme)],
     response: Response,
     username: str,
     core: Core = Depends(get_core),
+    application_context: IApplicationContext = Depends(get_application_context),
 ) -> BaseModel:
+
     get_user_response = core.get_user(username=username)
     handle_response_status_code(response, get_user_response)
     return get_user_response.response_content
 
 
-@app.put("/user/{username}", response_model=User)
+@app.put("/user/update", response_model=User)
 async def update_user(
     response: Response,
-    username: str,
-    education: list[Education],
-    skills: list[Skill],
-    experience: list[Experience],
-    preference: Preference,
+    update_user_request: UpdateUserRequest,
     token: Annotated[str, Depends(oauth2_scheme)],
     core: Core = Depends(get_core),
     application_context: IApplicationContext = Depends(get_application_context),
@@ -216,11 +214,11 @@ async def update_user(
         SetupUserRequest(
             account=account,
             user=User(
-                username=username,
-                education=education,
-                skills=skills,
-                experience=experience,
-                preference=preference,
+                username=update_user_request.username,
+                education=update_user_request.education,
+                skills=update_user_request.skills,
+                experience=update_user_request.experience,
+                preference=Preference(),
             ),
         )
     )
@@ -231,11 +229,7 @@ async def update_user(
 @app.post("/application", response_model=ApplicationId)
 async def create_application(
     response: Response,
-    location: JobLocation,
-    job_type: JobType,
-    experience_level: ExperienceLevel,
-    description: str,
-    company_id: int,
+    request: CreateApplicationRequest,
     token: Annotated[str, Depends(oauth2_scheme)],
     core: Core = Depends(get_core),
     application_context: IApplicationContext = Depends(get_application_context),
@@ -246,16 +240,7 @@ async def create_application(
     """
     account = application_context.get_current_user(token)
 
-    create_application_response = core.create_application(
-        CreateApplicationRequest(
-            account=account,
-            location=location,
-            job_type=job_type,
-            experience_level=experience_level,
-            description=description,
-            company_id=company_id,
-        )
-    )
+    create_application_response = core.create_application(account=account, request=request)
 
     handle_response_status_code(response, create_application_response)
     return create_application_response.response_content
@@ -286,10 +271,7 @@ async def get_application(
 async def update_application(
     response: Response,
     application_id: int,
-    location: JobLocation,
-    job_type: JobType,
-    experience_level: ExperienceLevel,
-    description: str,
+    request: UpdateApplicationRequest,
     token: Annotated[str, Depends(oauth2_scheme)],
     application_context: IApplicationContext = Depends(get_application_context),
     core: Core = Depends(get_core),
@@ -300,14 +282,8 @@ async def update_application(
     account = application_context.get_current_user(token)
 
     update_application_response = core.update_application(
-        UpdateApplicationRequest(
-            account=account,
-            id=application_id,
-            location=location,
-            job_type=job_type,
-            experience_level=experience_level,
-            description=description,
-        )
+        account=account,
+        request=request
     )
 
     handle_response_status_code(response, update_application_response)
@@ -333,6 +309,18 @@ async def application_interaction(
 
     handle_response_status_code(response, application_interaction_response)
     return application_interaction_response.response_content
+
+
+@app.get("/company/{company_id}/application")
+def get_company_applications(
+        response: Response,
+        company_id: int,
+        core: Core = Depends(get_core)
+) -> BaseModel:
+    applications_response = core.get_applications(company_id)
+    handle_response_status_code(response, applications_response)
+
+    return applications_response.response_content
 
 
 @app.delete("/application/{application_id}")
@@ -363,6 +351,11 @@ def get_industries() -> list[str]:
 @app.get("/organization-size", responses={200: {}})
 def get_organization_sizes() -> list[str]:
     return [e for e in OrganizationSize]
+
+
+@app.get("/experience-level", responses={200: {}})
+def get_experience_levels() -> list[str]:
+    return [e.value for e in ExperienceLevel]
 
 
 @app.post(
