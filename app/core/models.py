@@ -21,16 +21,10 @@ class SwipeDirection(StrEnum):
 class Industry(StrEnum):
     SOFTWARE_ENGINEERING = "Software Engineering"
 
-    def __str__(self) -> str:
-        return self.value
-
 
 # TODO: ADD VALUES
 class OrganizationSize(StrEnum):
     SMALL = "1-10 employees"
-
-    def __str__(self) -> str:
-        return self.value
 
 
 class JobLocation(StrEnum):
@@ -38,16 +32,10 @@ class JobLocation(StrEnum):
     REMOTE = "Remote"
     HYBRID = "Hybrid"
 
-    def __str__(self) -> str:
-        return self.value
-
 
 class JobType(StrEnum):
     PART_TIME = "Part-time"
     FULL_TIME = "Full-time"
-
-    def __str__(self) -> str:
-        return self.value
 
 
 class ExperienceLevel(StrEnum):
@@ -56,9 +44,6 @@ class ExperienceLevel(StrEnum):
     MIDDLE = "Middle"
     SENIOR = "Senior"
     LEAD = "Lead"
-
-    def __str__(self) -> str:
-        return self.value
 
 
 class Application(BaseModel):
