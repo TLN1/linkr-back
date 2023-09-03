@@ -20,7 +20,7 @@ class SqliteMatchRepository(IMatchRepository):
             "    OR NOT (s.swipe_for == ? AND s.direction == ?)"
             " ORDER BY random()"
             " LIMIT ?",
-            [SwipeFor.USER, SwipeDirection.RIGHT, amount]
+            [SwipeFor.USER, SwipeDirection.RIGHT, amount],
         )
 
         cursor.close()

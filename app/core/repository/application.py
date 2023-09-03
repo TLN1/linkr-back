@@ -18,7 +18,7 @@ class IApplicationRepository(Protocol):
         job_type: JobType,
         skills: list[str],
         description: str,
-        company_id: int
+        company_id: int,
     ) -> Application | None:
         pass
 

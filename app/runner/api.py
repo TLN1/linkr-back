@@ -16,11 +16,8 @@ from app.core.models import (
     Company,
     ExperienceLevel,
     Industry,
-    JobLocation,
-    JobType,
     OrganizationSize,
     Preference,
-    Skill,
     SwipeDirection,
     SwipeFor,
     Token,
@@ -53,7 +50,6 @@ from app.infra.repository.account import SqliteAccountRepository
 from app.infra.repository.application import SqliteApplicationRepository
 from app.infra.repository.company import SqliteCompanyRepository
 from app.infra.repository.match import SqliteMatchRepository
-from app.infra.repository.user import InMemoryUserRepository
 from app.infra.repository.user import SqliteUserRepository
 
 app = FastAPI()
@@ -194,7 +190,6 @@ def get_user(
     core: Core = Depends(get_core),
     application_context: IApplicationContext = Depends(get_application_context),
 ) -> BaseModel:
-
     get_user_response = core.get_user(username=username)
     handle_response_status_code(response, get_user_response)
     return get_user_response.response_content
@@ -240,7 +235,9 @@ async def create_application(
     """
     account = application_context.get_current_user(token)
 
-    create_application_response = core.create_application(account=account, request=request)
+    create_application_response = core.create_application(
+        account=account, request=request
+    )
 
     handle_response_status_code(response, create_application_response)
     return create_application_response.response_content
@@ -282,8 +279,7 @@ async def update_application(
     account = application_context.get_current_user(token)
 
     update_application_response = core.update_application(
-        account=account,
-        request=request
+        account=account, request=request
     )
 
     handle_response_status_code(response, update_application_response)
@@ -313,9 +309,7 @@ async def application_interaction(
 
 @app.get("/company/{company_id}/application")
 def get_company_applications(
-        response: Response,
-        company_id: int,
-        core: Core = Depends(get_core)
+    response: Response, company_id: int, core: Core = Depends(get_core)
 ) -> BaseModel:
     applications_response = core.get_applications(company_id)
     handle_response_status_code(response, applications_response)
@@ -355,7 +349,7 @@ def get_organization_sizes() -> list[str]:
 
 @app.get("/experience-level", responses={200: {}})
 def get_experience_levels() -> list[str]:
-    return [e.value for e in ExperienceLevel]
+    return [e for e in ExperienceLevel]
 
 
 @app.post(

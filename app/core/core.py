@@ -11,7 +11,6 @@ from app.core.models import (
     SwipeDirection,
     SwipeFor,
 )
-from app.core.models import Account, ApplicationId, Industry, OrganizationSize, Application
 from app.core.requests import (
     ApplicationInteractionRequest,
     CreateApplicationRequest,
@@ -21,7 +20,7 @@ from app.core.requests import (
     SetupUserRequest,
     UpdateApplicationRequest,
 )
-from app.core.responses import CoreResponse, ApplicationsResponse
+from app.core.responses import ApplicationsResponse, CoreResponse
 from app.core.services.account import AccountService
 from app.core.services.application import ApplicationService
 from app.core.services.company import CompanyService
@@ -70,7 +69,9 @@ class Core:
 
         return CoreResponse(status=status, response_content=user)
 
-    def create_application(self, account: Account, request: CreateApplicationRequest) -> CoreResponse:
+    def create_application(
+        self, account: Account, request: CreateApplicationRequest
+    ) -> CoreResponse:
         company = self.company_service.get_company(request.company_id)
         if company is None or company.owner_username != account.username:
             return CoreResponse(status=Status.COMPANY_DOES_NOT_EXIST)
@@ -105,9 +106,13 @@ class Core:
 
         applications = self.application_service.get_applications(company_id)
 
-        return CoreResponse(status=Status.OK, response_content=ApplicationsResponse(applications))
+        return CoreResponse(
+            status=Status.OK, response_content=ApplicationsResponse(applications)
+        )
 
-    def update_application(self, account: Account, request: UpdateApplicationRequest) -> CoreResponse:
+    def update_application(
+        self, account: Account, request: UpdateApplicationRequest
+    ) -> CoreResponse:
         status, application = self.application_service.get_application(request.id)
         if status != Status.OK:
             return CoreResponse(status=status)
