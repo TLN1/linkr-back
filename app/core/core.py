@@ -9,6 +9,7 @@ from app.core.models import (
     Industry,
     OrganizationSize,
     SwipeDirection,
+    Preference
 )
 from app.core.requests import (
     ApplicationInteractionRequest,
@@ -18,6 +19,7 @@ from app.core.requests import (
     RegisterRequest,
     SetupUserRequest,
     UpdateApplicationRequest,
+    UpdatePreferencesRequest,
 )
 from app.core.responses import ApplicationsResponse, CoreResponse, SwipeListResponse
 from app.core.services.account import AccountService
@@ -63,6 +65,24 @@ class Core:
         status, user = self.user_service.update_user(
             account=request.account, user=request.user
         )
+        if status != Status.OK or user is None:
+            return CoreResponse(status=status)
+
+        return CoreResponse(status=status, response_content=user)
+
+    def update_preferences(
+        self, account: Account, request: UpdatePreferencesRequest
+    ) -> CoreResponse:
+        status, user = self.user_service.update_preferences(
+            account=account,
+            preference=Preference(
+                industry=request.industry,
+                job_type=request.job_type,
+                job_location=request.job_location,
+                experience_level=request.experience_level,
+            ),
+        )
+
         if status != Status.OK or user is None:
             return CoreResponse(status=status)
 

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from app.core.constants import Status
-from app.core.models import Account, User
+from app.core.models import Account, Preference, User
 from app.core.repository.user import IUserRepository
 
 
@@ -34,3 +34,14 @@ class UserService:
 
         user = self.user_repository.get_user(username=username)
         return Status.OK, user
+
+    def update_preferences(
+        self, account: Account, preference: Preference
+    ) -> tuple[Status, User | None]:
+        updated_user = self.user_repository.update_preferences(
+            username=account.username, preference=preference
+        )
+
+        status = Status.USER_SETUP_ERROR if updated_user is None else Status.OK
+
+        return status, updated_user

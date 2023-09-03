@@ -20,7 +20,7 @@ from app.core.models import (
     Preference,
     SwipeDirection,
     Token,
-    User,
+    User, JobType, JobLocation,
 )
 from app.core.requests import (
     ApplicationInteractionRequest,
@@ -31,6 +31,7 @@ from app.core.requests import (
     RegisterRequest,
     SetupUserRequest,
     UpdateApplicationRequest,
+    UpdatePreferencesRequest,
     UpdateUserRequest,
 )
 from app.core.responses import CoreResponse, SwipeListResponse
@@ -220,6 +221,23 @@ async def update_user(
     return setup_user_response.response_content
 
 
+@app.put("/preferences/update", response_model=User)
+async def update_preferences(
+    response: Response,
+    update_preferences_request: UpdatePreferencesRequest,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    core: Core = Depends(get_core),
+    application_context: IApplicationContext = Depends(get_application_context),
+) -> BaseModel:
+    account = application_context.get_current_user(token=token)
+
+    update_preferences_response = core.update_preferences(
+        account=account, request=update_preferences_request
+    )
+    handle_response_status_code(response, update_preferences_response)
+    return update_preferences_response.response_content
+
+
 @app.post("/application", response_model=ApplicationId)
 async def create_application(
     response: Response,
@@ -339,6 +357,21 @@ async def delete_application(
 @app.get("/industry", responses={200: {}})
 def get_industries() -> list[str]:
     return [e for e in Industry]
+
+
+@app.get("/job_location", responses={200: {}})
+def get_job_locations() -> list[str]:
+    return [j.value for j in JobLocation]
+
+
+@app.get("/job_type", responses={200: {}})
+def get_job_types() -> list[str]:
+    return [j.value for j in JobType]
+
+
+@app.get("/experience_level", responses={200: {}})
+def get_experience_level() -> list[str]:
+    return [e.value for e in ExperienceLevel]
 
 
 @app.get("/organization-size", responses={200: {}})

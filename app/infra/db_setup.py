@@ -40,14 +40,14 @@ def create_tables(cursor: Cursor, connection: Connection) -> None:
 
     cursor.execute(
         """
-        CREATE TABLE IF NOT EXISTS user (
+        CREATE TABLE IF NOT EXISTS user(
             id INTEGER PRIMARY KEY,
             username TEXT NOT NULL,
             education TEXT,
             skills TEXT,
             experience TEXT,
-            FOREIGN KEY (username) REFERENCES account (username)
-        );
+            preference TEXT
+        )
         """
     )
 
