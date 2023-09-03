@@ -219,7 +219,7 @@ async def update_user(
     return setup_user_response.response_content
 
 
-@app.put("/preferences/update", response_model=Preference)
+@app.put("/preferences/update", response_model=User)
 async def update_preferences(
     response: Response,
     update_preferences_request: UpdatePreferencesRequest,

@@ -36,10 +36,10 @@ class UserService:
         return Status.OK, user
 
     def update_preferences(
-        self, account: Account, preferences: Preference
+        self, account: Account, preference: Preference
     ) -> tuple[Status, User | None]:
         updated_user = self.user_repository.update_preferences(
-            username=account.username, preference=preferences
+            username=account.username, preference=preference
         )
 
         status = Status.USER_SETUP_ERROR if updated_user is None else Status.OK

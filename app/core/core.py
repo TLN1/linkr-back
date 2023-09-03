@@ -72,7 +72,7 @@ class Core:
     ) -> CoreResponse:
         status, user = self.user_service.update_preferences(
             account=account,
-            preferences=Preference(
+            preference=Preference(
                 industry=request.industry,
                 job_type=request.job_type,
                 job_location=request.job_location,
@@ -80,7 +80,6 @@ class Core:
             ),
         )
 
-        # TODO: check this part
         if status != Status.OK or user is None:
             return CoreResponse(status=status)
 
