@@ -4,10 +4,10 @@ from app.core.models import Chat, Message
 
 
 class IChatRepository(Protocol):
-    def create_chat(self, username1: str, username2: str) -> Chat:
+    def create_chat(self, username1: str, username2: str) -> Chat | None:
         pass
 
-    def get_chat(self, username1: str, username2: str) -> Chat:
+    def get_chat(self, username1: str, username2: str) -> Chat | None:
         pass
 
     def has_chat(self, username1: str, username2: str) -> bool:

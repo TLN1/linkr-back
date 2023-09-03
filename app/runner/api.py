@@ -1,5 +1,5 @@
 import json
-from typing import Annotated, List
+from typing import Annotated
 
 import uvicorn
 from fastapi import (
@@ -61,6 +61,7 @@ from app.infra.auth_utils import oauth2_scheme, pwd_context
 from app.infra.db_setup import ConnectionProvider
 from app.infra.repository.account import InMemoryAccountRepository
 from app.infra.repository.application import InMemoryApplicationRepository
+from app.infra.repository.chat import InMemoryChatRepository
 from app.infra.repository.company import SqliteCompanyRepository
 from app.infra.repository.user import InMemoryUserRepository
 
@@ -87,6 +88,7 @@ if __name__ == "__main__":
 
 in_memory_account_repository = InMemoryAccountRepository()
 in_memory_application_repository = InMemoryApplicationRepository()
+
 in_memory_user_repository = InMemoryUserRepository()
 in_memory_application_context = InMemoryApplicationContext(
     account_repository=in_memory_account_repository, hash_verifier=pwd_context.verify
@@ -97,6 +99,7 @@ in_memory_company_repository = SqliteCompanyRepository(
 in_memory_oauth_application_context = InMemoryOauthApplicationContext(
     account_repository=in_memory_account_repository, hash_verifier=pwd_context.verify
 )
+in_memory_chat_repository = InMemoryChatRepository([])
 
 
 def get_application_context() -> IApplicationContext:
@@ -500,28 +503,25 @@ class UserConnectionManager:
 
 manager = UserConnectionManager()
 chat_service = ChatService(
-    user_repository=InMemoryUserRepository,
-)
-
+    user_repository=in_memory_user_repository,
+    chat_repository=in_memory_chat_repository)
 
 @app.websocket("/register/ws/{username}")
 async def websocket_endpoint(websocket: WebSocket):
-    await manager.connect(websocket.path_params.get("username"), websocket)
+    username = websocket.path_params.get("username");
+    await manager.connect(username, websocket)
     while True:
         data = await websocket.receive_text()
         message_data = json.loads(data)
         user = message_data.get("user")
         time = message_data.get("time")
         text = message_data.get("text")
-        if chat_service.send_message(
-            message=Message(
-                sender=websocket.path_params.get("username"),
-                recipient=user,
-                time=time,
-                text=text,
-            )
-        ):
+        message: Message = Message(sender_username=username, recipient_username=user, time=time, text=text,)
+        status, chat = chat_service.get_chat(username1=username, username2=user)
+        if chat is None:
+            chat_service.create_chat(username1=username, username2=user)
 
+        if chat_service.send_message(message=message):
             await manager.send_personal_message(
                 username=user,
                 message={
