@@ -2,7 +2,14 @@ import json
 from typing import Annotated, List
 
 import uvicorn
-from fastapi import Depends, FastAPI, HTTPException, Response, WebSocket, WebSocketDisconnect
+from fastapi import (
+    Depends,
+    FastAPI,
+    HTTPException,
+    Response,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
@@ -28,6 +35,7 @@ from app.core.models import (
     Skill,
     Token,
     User,
+    Message,
 )
 from app.core.requests import (
     ApplicationInteractionRequest,
@@ -42,6 +50,7 @@ from app.core.requests import (
 from app.core.responses import CoreResponse
 from app.core.services.account import AccountService
 from app.core.services.application import ApplicationService
+from app.core.services.chat import ChatService
 from app.core.services.company import CompanyService
 from app.core.services.user import UserService
 from app.infra.application_context import (
@@ -490,6 +499,9 @@ class UserConnectionManager:
 
 
 manager = UserConnectionManager()
+chat_service = ChatService(
+    user_repository=InMemoryUserRepository,
+)
 
 
 @app.websocket("/register/ws/{username}")
@@ -498,7 +510,26 @@ async def websocket_endpoint(websocket: WebSocket):
     while True:
         data = await websocket.receive_text()
         message_data = json.loads(data)
-        user = message_data.get('user')
-        time = message_data.get('time')
-        text = message_data.get('text')
-        await manager.send_personal_message(username=user, message={"user": websocket.base_url.username, "time": time, "text": text})
+        user = message_data.get("user")
+        time = message_data.get("time")
+        text = message_data.get("text")
+        if chat_service.send_message(
+            message=Message(
+                sender=websocket.path_params.get("username"),
+                recipient=user,
+                time=time,
+                text=text,
+            )
+        ):
+
+            await manager.send_personal_message(
+                username=user,
+                message={
+                    "user": websocket.base_url.username,
+                    "time": time,
+                    "text": text,
+                },
+            )
+
+        else:
+            await websocket.send_json({"error": "error sending message"})

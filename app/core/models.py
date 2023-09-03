@@ -156,3 +156,17 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     username: str | None = None
+
+
+class Message(BaseModel):
+    sender_username: str
+    recipient_username: str
+    time: str
+    text: str
+
+
+class Chat(BaseModel):
+    chat_id: int
+    username1: str
+    username2: str
+    message_list: list[Message] = []

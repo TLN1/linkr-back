@@ -9,6 +9,7 @@ from sqlite3 import Connection, Cursor
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = Path(BASE_DIR).joinpath("..").joinpath("app.db")
 
+
 @dataclass
 class ConnectionProvider:
     _connection: Connection | None = field(default=None, init=False)
