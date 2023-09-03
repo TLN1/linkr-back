@@ -16,3 +16,6 @@ lint: ## Run code linters
 
 test:  ## Run tests with coverage
 	pytest --cov
+
+run:
+	uvicorn app.runner.api:app --reload
