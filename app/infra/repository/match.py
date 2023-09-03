@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from sqlite3 import Connection
 
 from app.core.models import Application, Preference, SwipeDirection, SwipeFor, User
-from app.core.repository.swipe import IMatchRepository
+from app.core.repository.match import IMatchRepository
 
 
 @dataclass
