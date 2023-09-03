@@ -8,7 +8,9 @@ from app.core.models import (
     ApplicationId,
     Industry,
     OrganizationSize,
-    Preference,
+    SwipeDirection,
+    SwipeFor,
+    Preference
 )
 from app.core.requests import (
     ApplicationInteractionRequest,
@@ -24,6 +26,7 @@ from app.core.responses import ApplicationsResponse, CoreResponse
 from app.core.services.account import AccountService
 from app.core.services.application import ApplicationService
 from app.core.services.company import CompanyService
+from app.core.services.match import MatchService
 from app.core.services.user import UserService
 
 
@@ -33,6 +36,7 @@ class Core:
     company_service: CompanyService
     application_service: ApplicationService
     user_service: UserService
+    match_service: MatchService
 
     def register(self, request: RegisterRequest) -> CoreResponse:
         status, account = self.account_service.register(
@@ -223,5 +227,64 @@ class Core:
     def delete_company(self, account: Account, company_id: int) -> CoreResponse:
         status = self.company_service.delete_company(
             account=account, company_id=company_id
+        )
+        return CoreResponse(status=status)
+
+    def get_swipe_list(
+        self, swipe_for: SwipeFor, amount: int, account: Account
+    ) -> CoreResponse:
+        status, user = self.user_service.get_user(username=account.username)
+        if status != Status.OK or user is None:
+            return CoreResponse(status=status)
+
+        status, swipe_response = self.match_service.get_swipe_list(
+            swipe_for=swipe_for, amount=amount, preference=user.preference
+        )
+
+        if status != Status.OK:
+            return CoreResponse(status=status)
+
+        return CoreResponse(status=status, response_content=swipe_response)
+
+    def swipe_application(
+        self, swiper_username: str, application_id: int, direction: SwipeDirection
+    ) -> CoreResponse:
+        status, application = self.application_service.get_application(
+            id=application_id
+        )
+        if status != status.OK or application is None:
+            return CoreResponse(status=status)
+
+        status, user = self.user_service.get_user(username=swiper_username)
+        if status != Status.OK or user is None:
+            return CoreResponse(status=status)
+
+        status = self.match_service.swipe_application(
+            swiper_username=swiper_username,
+            application_id=application_id,
+            direction=direction,
+        )
+        return CoreResponse(status=status)
+
+    def swipe_user(
+        self,
+        swiper_application_id: int,
+        swiped_username: str,
+        direction: SwipeDirection,
+    ) -> CoreResponse:
+        status, user = self.user_service.get_user(username=swiped_username)
+        if status != Status.OK or user is None:
+            return CoreResponse(status=status)
+
+        status, application = self.application_service.get_application(
+            id=swiper_application_id
+        )
+        if status != status.OK or application is None:
+            return CoreResponse(status=status)
+
+        status = self.match_service.swipe_user(
+            swiper_application_id=swiper_application_id,
+            swiped_username=swiped_username,
+            direction=direction,
         )
         return CoreResponse(status=status)

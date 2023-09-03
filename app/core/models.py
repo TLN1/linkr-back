@@ -7,6 +7,16 @@ from pydantic import BaseModel, Field
 # TODO: maybe replace Enums with StrEnums?
 
 
+class SwipeFor(StrEnum):
+    USER = "user"
+    APPLICATION = "application"
+
+
+class SwipeDirection(StrEnum):
+    LEFT = "left"
+    RIGHT = "right"
+
+
 # TODO: ADD VALUES
 class Industry(StrEnum):
     SOFTWARE_ENGINEERING = "Software Engineering"
@@ -145,6 +155,10 @@ class Account(BaseModel):
             filter(lambda company: company.id == company_id, self.companies)
         )
         return len(filtered) > 0
+
+
+class SwipeList(BaseModel):
+    swipe_list: list[Application] | list[User] = Field(default_factory=list)
 
 
 class ApplicationId(BaseModel):

@@ -16,12 +16,12 @@ from app.core.models import (
     Company,
     ExperienceLevel,
     Industry,
-    JobLocation,
-    JobType,
     OrganizationSize,
     Preference,
+    SwipeDirection,
+    SwipeFor,
     Token,
-    User,
+    User, JobType, JobLocation,
 )
 from app.core.requests import (
     ApplicationInteractionRequest,
@@ -39,6 +39,7 @@ from app.core.responses import CoreResponse
 from app.core.services.account import AccountService
 from app.core.services.application import ApplicationService
 from app.core.services.company import CompanyService
+from app.core.services.match import MatchService
 from app.core.services.user import UserService
 from app.infra.application_context import (
     InMemoryApplicationContext,
@@ -49,6 +50,7 @@ from app.infra.db_setup import ConnectionProvider
 from app.infra.repository.account import SqliteAccountRepository
 from app.infra.repository.application import SqliteApplicationRepository
 from app.infra.repository.company import SqliteCompanyRepository
+from app.infra.repository.match import SqliteMatchRepository
 from app.infra.repository.user import SqliteUserRepository
 
 app = FastAPI()
@@ -72,6 +74,7 @@ app.add_middleware(
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
+match_repository = SqliteMatchRepository(connection=ConnectionProvider.get_connection())
 user_repository = SqliteUserRepository(connection=ConnectionProvider.get_connection())
 application_repository = SqliteApplicationRepository(
     connection=ConnectionProvider.get_connection()
@@ -112,6 +115,7 @@ def get_core() -> Core:
         company_service=CompanyService(
             company_repository=company_repository, account_repository=account_repository
         ),
+        match_service=MatchService(match_repository=match_repository),
     )
 
 
@@ -187,7 +191,6 @@ def get_user(
     core: Core = Depends(get_core),
     application_context: IApplicationContext = Depends(get_application_context),
 ) -> BaseModel:
-
     get_user_response = core.get_user(username=username)
     handle_response_status_code(response, get_user_response)
     return get_user_response.response_content
@@ -354,7 +357,7 @@ async def delete_application(
 
 @app.get("/industry", responses={200: {}})
 def get_industries() -> list[str]:
-    return [e.value for e in Industry]
+    return [e for e in Industry]
 
 
 @app.get("/job_location", responses={200: {}})
@@ -374,12 +377,12 @@ def get_experience_level() -> list[str]:
 
 @app.get("/organization-size", responses={200: {}})
 def get_organization_sizes() -> list[str]:
-    return [e.value for e in OrganizationSize]
+    return [e for e in OrganizationSize]
 
 
 @app.get("/experience-level", responses={200: {}})
 def get_experience_levels() -> list[str]:
-    return [e.value for e in ExperienceLevel]
+    return [e for e in ExperienceLevel]
 
 
 @app.post(
@@ -483,3 +486,57 @@ def delete_company(
     account = application_context.get_current_user(token)
     delete_response = core.delete_company(account=account, company_id=company_id)
     handle_response_status_code(response, delete_response)
+
+
+@app.get("/swipe/list", responses={200: {}, 500: {}})
+def swipe_list(
+    response: Response,
+    swipe_for: SwipeFor,
+    amount: int,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    application_context: IApplicationContext = Depends(get_application_context),
+    core: Core = Depends(get_core),
+) -> BaseModel:
+    account = application_context.get_current_user(token)
+    swipe_response = core.get_swipe_list(
+        swipe_for=swipe_for, amount=amount, account=account
+    )
+    handle_response_status_code(response, swipe_response)
+    return swipe_response.response_content
+
+
+@app.put("/swipe/application")
+def swipe_application(
+    response: Response,
+    application_id: int,
+    direction: SwipeDirection,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    application_context: IApplicationContext = Depends(get_application_context),
+    core: Core = Depends(get_core),
+) -> None:
+    account = application_context.get_current_user(token)
+    swipe_response = core.swipe_application(
+        swiper_username=account.username,
+        application_id=application_id,
+        direction=direction,
+    )
+    handle_response_status_code(response, swipe_response)
+
+
+@app.put("/swipe/user")
+def swipe_user(
+    response: Response,
+    application_id: int,
+    swiped_username: str,
+    direction: SwipeDirection,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    application_context: IApplicationContext = Depends(get_application_context),
+    core: Core = Depends(get_core),
+) -> None:
+    _ = application_context.get_current_user(token)
+    swipe_response = core.swipe_user(
+        swiper_application_id=application_id,
+        swiped_username=swiped_username,
+        direction=direction,
+    )
+    handle_response_status_code(response, swipe_response)

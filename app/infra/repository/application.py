@@ -146,8 +146,8 @@ class SqliteApplicationRepository(IApplicationRepository):
         skills_encoded = ",".join(skills)
         res = cursor.execute(
             "INSERT INTO application "
-            "(title, location, job_type, experience_level, "
-            "description, skills, views, company_id) "
+            "(title, location, job_type, experience_level, description, "
+            " skills, views, company_id) "
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 title,
