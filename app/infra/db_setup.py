@@ -62,9 +62,10 @@ def create_tables(cursor: Cursor, connection: Connection) -> None:
         " ON DELETE CASCADE);"
     )
 
-    cursor.execute("DROP TABLE IF EXISTS user;");
+    cursor.execute("DROP TABLE IF EXISTS user;")
 
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS user (
             id INTEGER PRIMARY KEY,
             username TEXT NOT NULL,
@@ -72,9 +73,10 @@ def create_tables(cursor: Cursor, connection: Connection) -> None:
             skills TEXT,
             experience TEXT
         )
-    """)
+    """
+    )
 
-    #TODO: add foreign key after adding account table
+    # TODO: add foreign key after adding account table
     # account_id INTEGER,
     # FOREIGN KEY (account_id) REFERENCES account(id),
 

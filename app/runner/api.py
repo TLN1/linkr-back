@@ -14,15 +14,12 @@ from app.core.models import (
     Application,
     ApplicationId,
     Company,
-    Education,
-    Experience,
     ExperienceLevel,
     Industry,
     JobLocation,
     JobType,
     OrganizationSize,
     Preference,
-    Skill,
     Token,
     User,
 )
@@ -34,7 +31,8 @@ from app.core.requests import (
     GetApplicationRequest,
     RegisterRequest,
     SetupUserRequest,
-    UpdateApplicationRequest, UpdateUserRequest,
+    UpdateApplicationRequest,
+    UpdateUserRequest,
 )
 from app.core.responses import CoreResponse
 from app.core.services.account import AccountService
@@ -50,7 +48,7 @@ from app.infra.db_setup import ConnectionProvider
 from app.infra.repository.account import SqliteAccountRepository
 from app.infra.repository.application import SqliteApplicationRepository
 from app.infra.repository.company import SqliteCompanyRepository
-from app.infra.repository.user import InMemoryUserRepository
+from app.infra.repository.user import SqliteUserRepository
 
 app = FastAPI()
 
@@ -73,7 +71,7 @@ app.add_middleware(
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
-user_repository = InMemoryUserRepository()
+user_repository = SqliteUserRepository(connection=ConnectionProvider.get_connection())
 application_repository = SqliteApplicationRepository(
     connection=ConnectionProvider.get_connection()
 )
@@ -186,7 +184,7 @@ def get_user(
     response: Response,
     username: str,
     core: Core = Depends(get_core),
-    application_context: IApplicationContext = Depends(get_application_context)
+    application_context: IApplicationContext = Depends(get_application_context),
 ) -> BaseModel:
 
     get_user_response = core.get_user(username=username)

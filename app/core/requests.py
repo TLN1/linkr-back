@@ -3,12 +3,15 @@ from dataclasses import dataclass, field
 # TODO maybe implement builder pattern for building requests
 from app.core.models import (
     Account,
+    Education,
+    Experience,
     ExperienceLevel,
     Industry,
     JobLocation,
     JobType,
     OrganizationSize,
-    User, Education, Skill, Experience,
+    Skill,
+    User,
 )
 
 
