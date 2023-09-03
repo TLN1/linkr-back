@@ -44,7 +44,7 @@ class SqliteUserRepository(IUserRepository):
         cursor.execute(
             "INSERT INTO user (username, education, skills, experience) "
             "VALUES (?, ?, ?, ?)",
-            (username, "[]", "[]", "[]"),
+            (username, json.dumps([]), json.dumps([]), json.dumps([])),
         )
         self.connection.commit()
         return User(username=username)
@@ -92,13 +92,13 @@ class SqliteUserRepository(IUserRepository):
             for edu in educations
         ]
 
-        skills = user_data[3]
+        skills = json.loads(user_data[3])
         skills_list = [
             Skill(name=skill["name"], description=skill["description"])
             for skill in skills
         ]
 
-        experience = user_data[4]
+        experience = json.loads(user_data[4])
         experience_list = [
             Experience(name=exp["name"], description=exp["description"])
             for exp in experience
