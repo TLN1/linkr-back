@@ -1,27 +1,25 @@
 from typing import Protocol
 
-from app.core.models import (
-    Application,
-    Benefit,
-    ExperienceLevel,
-    JobLocation,
-    JobType,
-    Requirement,
-)
+from app.core.models import Application, ExperienceLevel, JobLocation, JobType
 
 
 class IApplicationRepository(Protocol):
     def create_application(
         self,
+        title: str,
+        experience_level: ExperienceLevel,
         location: JobLocation,
         job_type: JobType,
-        experience_level: ExperienceLevel,
-        requirements: list[Requirement],
-        benefits: list[Benefit],
+        skills: list[str],
+        description: str,
+        company_id: int,
     ) -> Application | None:
         pass
 
     def get_application(self, id: int) -> Application | None:
+        pass
+
+    def get_company_applications(self, company_id: int) -> list[Application]:
         pass
 
     def has_application(self, id: int) -> bool:
@@ -30,11 +28,12 @@ class IApplicationRepository(Protocol):
     def update_application(
         self,
         id: int,
+        title: str,
         location: JobLocation,
         job_type: JobType,
         experience_level: ExperienceLevel,
-        requirements: list[Requirement],
-        benefits: list[Benefit],
+        skills: list[str],
+        description: str,
     ) -> Application | None:
         pass
 

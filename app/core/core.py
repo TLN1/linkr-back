@@ -20,7 +20,7 @@ from app.core.requests import (
     UpdateApplicationRequest,
     UpdatePreferencesRequest,
 )
-from app.core.responses import CoreResponse
+from app.core.responses import ApplicationsResponse, CoreResponse
 from app.core.services.account import AccountService
 from app.core.services.application import ApplicationService
 from app.core.services.company import CompanyService
@@ -86,29 +86,25 @@ class Core:
 
         return CoreResponse(status=status, response_content=user)
 
-    def create_application(self, request: CreateApplicationRequest) -> CoreResponse:
-        get_company_response = self.get_company(request.company_id)
-        if get_company_response.status != Status.OK:
-            return get_company_response
+    def create_application(
+        self, account: Account, request: CreateApplicationRequest
+    ) -> CoreResponse:
+        company = self.company_service.get_company(request.company_id)
+        if company is None or company.owner_username != account.username:
+            return CoreResponse(status=Status.COMPANY_DOES_NOT_EXIST)
 
         status, application = self.application_service.create_application(
-            account=request.account,
+            title=request.title,
             location=request.location,
             job_type=request.job_type,
             experience_level=request.experience_level,
-            requirements=request.requirements,
-            benefits=request.benefits,
+            skills=request.skills,
+            description=request.description,
+            company_id=request.company_id,
         )
 
         if status != Status.OK or application is None:
             return CoreResponse(status)
-
-        self.account_service.link_application(
-            account=request.account, application=application
-        )
-        self.company_service.link_application(
-            company_id=request.company_id, application=application
-        )
 
         return CoreResponse(
             status=status, response_content=ApplicationId(application_id=application.id)
@@ -120,15 +116,36 @@ class Core:
         application_response = BaseModel() if application is None else application
         return CoreResponse(status=status, response_content=application_response)
 
-    def update_application(self, request: UpdateApplicationRequest) -> CoreResponse:
+    def get_applications(self, company_id: int) -> CoreResponse:
+        company = self.company_service.get_company(company_id)
+        if company is None:
+            return CoreResponse(status=Status.COMPANY_DOES_NOT_EXIST)
+
+        applications = self.application_service.get_applications(company_id)
+
+        return CoreResponse(
+            status=Status.OK, response_content=ApplicationsResponse(applications)
+        )
+
+    def update_application(
+        self, account: Account, request: UpdateApplicationRequest
+    ) -> CoreResponse:
+        status, application = self.application_service.get_application(request.id)
+        if status != Status.OK:
+            return CoreResponse(status=status)
+
+        company = self.company_service.get_company(application.company_id)
+        if company is None or company.owner_username != account.username:
+            return CoreResponse(status=Status.COMPANY_DOES_NOT_EXIST)
+
         status, application = self.application_service.update_application(
-            account=request.account,
             id=request.id,
+            title=request.title,
             location=request.location,
             job_type=request.job_type,
             experience_level=request.experience_level,
-            requirements=request.requirements,
-            benefits=request.benefits,
+            skills=request.skills,
+            description=request.description,
         )
 
         if status != Status.OK or application is None:
@@ -139,15 +156,11 @@ class Core:
     def application_interaction(
         self, request: ApplicationInteractionRequest
     ) -> CoreResponse:
-        status = self.application_service.application_interaction(
-            account=request.account, id=request.id
-        )
+        status = self.application_service.application_interaction(id=request.id)
         return CoreResponse(status=status)
 
     def delete_application(self, request: DeleteApplicationRequest) -> CoreResponse:
-        status = self.application_service.delete_application(
-            account=request.account, id=request.id
-        )
+        status = self.application_service.delete_application(id=request.id)
         return CoreResponse(status=status)
 
     def create_company(
@@ -167,13 +180,11 @@ class Core:
             organization_size=organization_size,
             image_uri=image_uri,
             cover_image_uri=cover_image_uri,
+            owner_username=account.username,
         )
 
         if company is None:
             return CoreResponse(status=status)
-
-        status = self.account_service.link_company(account=account, company=company)
-        # TODO: what if error occurred during linking company with account
 
         return CoreResponse(status=status, response_content=company)
 

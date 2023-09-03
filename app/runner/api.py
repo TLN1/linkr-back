@@ -13,7 +13,6 @@ from app.core.models import (
     Account,
     Application,
     ApplicationId,
-    Benefit,
     Company,
     ExperienceLevel,
     Industry,
@@ -21,7 +20,6 @@ from app.core.models import (
     JobType,
     OrganizationSize,
     Preference,
-    Requirement,
     Token,
     User,
 )
@@ -48,12 +46,13 @@ from app.infra.application_context import (
 )
 from app.infra.auth_utils import oauth2_scheme, pwd_context
 from app.infra.db_setup import ConnectionProvider
-from app.infra.repository.account import InMemoryAccountRepository
-from app.infra.repository.application import InMemoryApplicationRepository
+from app.infra.repository.account import SqliteAccountRepository
+from app.infra.repository.application import SqliteApplicationRepository
 from app.infra.repository.company import SqliteCompanyRepository
-from app.infra.repository.user import InMemoryUserRepository
+from app.infra.repository.user import SqliteUserRepository
 
 app = FastAPI()
+
 
 origins = [
     "http://localhost",
@@ -69,20 +68,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
-in_memory_account_repository = InMemoryAccountRepository()
-in_memory_application_repository = InMemoryApplicationRepository()
-in_memory_user_repository = InMemoryUserRepository()
-in_memory_application_context = InMemoryApplicationContext(
-    account_repository=in_memory_account_repository, hash_verifier=pwd_context.verify
-)
-in_memory_company_repository = SqliteCompanyRepository(
+user_repository = SqliteUserRepository(connection=ConnectionProvider.get_connection())
+application_repository = SqliteApplicationRepository(
     connection=ConnectionProvider.get_connection()
 )
+company_repository = SqliteCompanyRepository(
+    application_repository=application_repository,
+    connection=ConnectionProvider.get_connection(),
+)
+account_repository = SqliteAccountRepository(
+    company_repository=company_repository,
+    connection=ConnectionProvider.get_connection(),
+)
+
+in_memory_application_context = InMemoryApplicationContext(
+    account_repository=account_repository, hash_verifier=pwd_context.verify
+)
 in_memory_oauth_application_context = InMemoryOauthApplicationContext(
-    account_repository=in_memory_account_repository, hash_verifier=pwd_context.verify
+    account_repository=account_repository, hash_verifier=pwd_context.verify
 )
 
 
@@ -93,17 +100,17 @@ def get_application_context() -> IApplicationContext:
 def get_core() -> Core:
     return Core(
         account_service=AccountService(
-            account_repository=in_memory_account_repository,
+            account_repository=account_repository,
             hash_function=pwd_context.hash,
         ),
         application_service=ApplicationService(
-            application_repository=in_memory_application_repository,
+            application_repository=application_repository,
         ),
         user_service=UserService(
-            user_repository=in_memory_user_repository,
+            user_repository=user_repository,
         ),
         company_service=CompanyService(
-            company_repository=in_memory_company_repository,
+            company_repository=company_repository, account_repository=account_repository
         ),
     )
 
@@ -119,10 +126,8 @@ def handle_response_status_code(
         )
 
 
-# TODO: get current user with depends
 @app.get("/users/me")
 async def read_users_me(
-    # current_user: Annotated[User, Depends(get_current_user)]):
     token: Annotated[str, Depends(oauth2_scheme)],
     application_context: IApplicationContext = Depends(get_application_context),
 ) -> Account:
@@ -133,7 +138,7 @@ async def read_users_me(
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     application_context: IApplicationContext = Depends(get_application_context),
-) -> Token:
+) -> BaseModel:
     user = application_context.authenticate_user(form_data.username, form_data.password)
     access_token = application_context.create_access_token(account=user)
 
@@ -175,16 +180,15 @@ def register(
 
 
 # TODO: need to change url
-@app.get("/user", response_model=User)
+@app.get("/user/{username}", response_model=User)
 def get_user(
     response: Response,
-    token: Annotated[str, Depends(oauth2_scheme)],
+    username: str,
     core: Core = Depends(get_core),
     application_context: IApplicationContext = Depends(get_application_context),
 ) -> BaseModel:
-    account = application_context.get_current_user(token=token)
 
-    get_user_response = core.get_user(username=account.username)
+    get_user_response = core.get_user(username=username)
     handle_response_status_code(response, get_user_response)
     return get_user_response.response_content
 
@@ -235,12 +239,7 @@ async def update_preferences(
 @app.post("/application", response_model=ApplicationId)
 async def create_application(
     response: Response,
-    location: JobLocation,
-    job_type: JobType,
-    experience_level: ExperienceLevel,
-    requirements: list[Requirement],
-    benefits: list[Benefit],
-    company_id: int,
+    request: CreateApplicationRequest,
     token: Annotated[str, Depends(oauth2_scheme)],
     core: Core = Depends(get_core),
     application_context: IApplicationContext = Depends(get_application_context),
@@ -252,15 +251,7 @@ async def create_application(
     account = application_context.get_current_user(token)
 
     create_application_response = core.create_application(
-        CreateApplicationRequest(
-            account=account,
-            location=location,
-            job_type=job_type,
-            experience_level=experience_level,
-            requirements=requirements,
-            benefits=benefits,
-            company_id=company_id,
-        )
+        account=account, request=request
     )
 
     handle_response_status_code(response, create_application_response)
@@ -292,11 +283,7 @@ async def get_application(
 async def update_application(
     response: Response,
     application_id: int,
-    location: JobLocation,
-    job_type: JobType,
-    experience_level: ExperienceLevel,
-    requirements: list[Requirement],
-    benefits: list[Benefit],
+    request: UpdateApplicationRequest,
     token: Annotated[str, Depends(oauth2_scheme)],
     application_context: IApplicationContext = Depends(get_application_context),
     core: Core = Depends(get_core),
@@ -307,15 +294,7 @@ async def update_application(
     account = application_context.get_current_user(token)
 
     update_application_response = core.update_application(
-        UpdateApplicationRequest(
-            account=account,
-            id=application_id,
-            location=location,
-            job_type=job_type,
-            experience_level=experience_level,
-            requirements=requirements,
-            benefits=benefits,
-        )
+        account=account, request=request
     )
 
     handle_response_status_code(response, update_application_response)
@@ -341,6 +320,16 @@ async def application_interaction(
 
     handle_response_status_code(response, application_interaction_response)
     return application_interaction_response.response_content
+
+
+@app.get("/company/{company_id}/application")
+def get_company_applications(
+    response: Response, company_id: int, core: Core = Depends(get_core)
+) -> BaseModel:
+    applications_response = core.get_applications(company_id)
+    handle_response_status_code(response, applications_response)
+
+    return applications_response.response_content
 
 
 @app.delete("/application/{application_id}")
@@ -388,6 +377,11 @@ def get_organization_sizes() -> list[str]:
     return [e.value for e in OrganizationSize]
 
 
+@app.get("/experience-level", responses={200: {}})
+def get_experience_levels() -> list[str]:
+    return [e.value for e in ExperienceLevel]
+
+
 @app.post(
     "/company",
     responses={
@@ -431,6 +425,7 @@ def create_company(
     response_model=Company,
 )
 def get_company(
+    _: Annotated[str, Depends(oauth2_scheme)],
     response: Response,
     company_id: int,
     core: Core = Depends(get_core),

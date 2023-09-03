@@ -1,9 +1,8 @@
 import json
 from dataclasses import dataclass, field
 from sqlite3 import Connection
-from typing import Any
 
-from app.core.models import Preference, User
+from app.core.models import Education, Experience, Preference, Skill, User
 from app.core.repository.user import IUserRepository
 
 
@@ -27,7 +26,7 @@ class InMemoryUserRepository(IUserRepository):
         return self.users.get(username)
 
     def has_user(self, username: str) -> bool:
-        return username in self.users
+        return self.get_user(username=username) is not None
 
     def update_preferences(self, username: str, preference: Preference) -> User | None:
         if not self.has_user(username=username):
@@ -40,18 +39,18 @@ class InMemoryUserRepository(IUserRepository):
 class SqliteUserRepository(IUserRepository):
     connection: Connection
 
-    def _deserialize_lists(self, user_data: Any) -> Any:
-        user_data["education"] = json.loads(user_data["education"])
-        user_data["skills"] = json.loads(user_data["skills"])
-        user_data["experience"] = json.loads(user_data["experience"])
-        return user_data
+    # def _deserialize_lists(self, user_data):
+    #     user_data["education"] = json.loads(user_data["education"])
+    #     user_data["skills"] = json.loads(user_data["skills"])
+    #     user_data["experience"] = json.loads(user_data["experience"])
+    #     return user_data
 
     def create_user(self, username: str) -> User | None:
         cursor = self.connection.cursor()
         cursor.execute(
             "INSERT INTO user (username, education, skills, experience) "
             "VALUES (?, ?, ?, ?)",
-            (username, "[]", "[]", "[]"),
+            (username, json.dumps([]), json.dumps([]), json.dumps([])),
         )
         self.connection.commit()
         return User(username=username)
@@ -62,9 +61,24 @@ class SqliteUserRepository(IUserRepository):
             "UPDATE user SET education = ?, skills = ?, experience = ? "
             "WHERE username = ?",
             (
-                json.dumps(user.education),
-                json.dumps(user.skills),
-                json.dumps(user.experience),
+                json.dumps(
+                    [
+                        {"name": edu.name, "description": edu.description}
+                        for edu in user.education
+                    ]
+                ),
+                json.dumps(
+                    [
+                        {"name": skill.name, "description": skill.description}
+                        for skill in user.skills
+                    ]
+                ),
+                json.dumps(
+                    [
+                        {"name": exp.name, "description": exp.description}
+                        for exp in user.experience
+                    ]
+                ),
                 username,
             ),
         )
@@ -73,17 +87,40 @@ class SqliteUserRepository(IUserRepository):
 
     def get_user(self, username: str) -> User | None:
         cursor = self.connection.cursor()
+
         cursor.execute("SELECT * FROM user WHERE username = ?", (username,))
         user_data = cursor.fetchone()
-        if user_data:
-            user_data = self._deserialize_lists(dict(user_data))
-            return User(**user_data)
-        return None
+        username = user_data[1]
+
+        educations = json.loads(user_data[2])
+        education_list = [
+            Education(name=edu["name"], description=edu["description"])
+            for edu in educations
+        ]
+
+        skills = json.loads(user_data[3])
+        skills_list = [
+            Skill(name=skill["name"], description=skill["description"])
+            for skill in skills
+        ]
+
+        experience = json.loads(user_data[4])
+        experience_list = [
+            Experience(name=exp["name"], description=exp["description"])
+            for exp in experience
+        ]
+        return User(
+            username=username,
+            education=education_list,
+            skills=skills_list,
+            experience=experience_list,
+        )
 
     def has_user(self, username: str) -> bool:
         cursor = self.connection.cursor()
         cursor.execute("SELECT COUNT(*) FROM user WHERE username = ?", (username,))
-        return cursor.fetchone()[0] > 0
+        user_exists: bool = cursor.fetchone()[0] > 0
+        return user_exists
 
     def update_preferences(self, username: str, preference: Preference) -> User | None:
         pass
