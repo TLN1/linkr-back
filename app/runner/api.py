@@ -33,7 +33,7 @@ from app.core.requests import (
     UpdateApplicationRequest,
     UpdateUserRequest,
 )
-from app.core.responses import CoreResponse
+from app.core.responses import CoreResponse, SwipeListResponse
 from app.core.services.account import AccountService
 from app.core.services.application import ApplicationService
 from app.core.services.company import CompanyService
@@ -454,7 +454,9 @@ def delete_company(
     handle_response_status_code(response, delete_response)
 
 
-@app.get("/swipe/list/users", responses={200: {}})
+@app.get(
+    "/swipe/list/users", responses={200: {}, 404: {}}, response_model=SwipeListResponse
+)
 def swipe_list_users(
     response: Response,
     swiper_application_id: int,
@@ -467,11 +469,16 @@ def swipe_list_users(
     swipe_response = core.get_swipe_list_users(
         swiper_application_id=swiper_application_id, amount=amount
     )
+    print(swipe_response.response_content)
     handle_response_status_code(response, swipe_response)
     return swipe_response.response_content
 
 
-@app.get("/swipe/list/applications", responses={200: {}})
+@app.get(
+    "/swipe/list/applications",
+    responses={200: {}, 404: {}},
+    response_model=SwipeListResponse,
+)
 def swipe_list_applications(
     response: Response,
     amount: int,

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from app.core.constants import Status
-from app.core.models import Preference, SwipeDirection, SwipeFor, SwipeList
+from app.core.models import Application, Preference, SwipeDirection, SwipeFor, User
 from app.core.repository.match import IMatchRepository
 
 
@@ -11,19 +11,19 @@ class MatchService:
 
     def get_swipe_list_users(
         self, swiper_application_id: int, amount: int
-    ) -> tuple[Status, SwipeList]:
+    ) -> tuple[Status, list[User]]:
         swipe_list = self.match_repository.get_swipe_list_users(
             application_id=swiper_application_id, amount=amount
         )
-        return Status.OK, SwipeList(swipe_list=swipe_list)
+        return Status.OK, swipe_list
 
     def get_swipe_list_applications(
         self, swiper_username: str, preference: Preference, amount: int
-    ) -> tuple[Status, SwipeList]:
+    ) -> tuple[Status, list[Application]]:
         swipe_list = self.match_repository.get_swipe_list_applications(
             swiper_username=swiper_username, preference=preference, amount=amount
         )
-        return Status.OK, SwipeList(swipe_list=swipe_list)
+        return Status.OK, swipe_list
 
     def swipe_application(
         self, swiper_username: str, application_id: int, direction: SwipeDirection

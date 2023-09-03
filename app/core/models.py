@@ -142,10 +142,6 @@ class Account(BaseModel):
         return len(filtered) > 0
 
 
-class SwipeList(BaseModel):
-    swipe_list: list[Application] | list[User] = Field(default_factory=list)
-
-
 class ApplicationId(BaseModel):
     application_id: int
 
