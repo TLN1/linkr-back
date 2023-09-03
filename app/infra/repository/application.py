@@ -17,11 +17,13 @@ class InMemoryApplicationRepository(IApplicationRepository):
 
     def create_application(
         self,
-        location: JobLocation,
-        job_type: JobType,
-        experience_level: ExperienceLevel,
-        description: str,
-        company_id: int,
+            title: str,
+            experience_level: ExperienceLevel,
+            location: JobLocation,
+            job_type: JobType,
+            skills: list[str],
+            description: str,
+            company_id: int
     ) -> Application | None:
         application_id = self._next_id()
         application = Application(
@@ -53,11 +55,13 @@ class InMemoryApplicationRepository(IApplicationRepository):
 
     def update_application(
         self,
-        id: int,
-        location: JobLocation,
-        job_type: JobType,
-        experience_level: ExperienceLevel,
-        description: str,
+            id: int,
+            title: str,
+            location: JobLocation,
+            job_type: JobType,
+            experience_level: ExperienceLevel,
+            skills: list[str],
+            description: str,
     ) -> Application | None:
         if not self.has_application(id=id):
             return None
@@ -94,19 +98,23 @@ class SqliteApplicationRepository(IApplicationRepository):
     def _convert_row(row: Any) -> Application | None:
         (
             id,
+            title,
             location,
             job_type,
             experience_level,
             description,
+            skill_encoded,
             views,
             company_id,
         ) = row
 
         return Application(
             id=id,
+            title=title,
             location=location,
             job_type=job_type,
             experience_level=experience_level,
+            skills=skill_encoded.split(','),
             description=description,
             views=views,
             company_id=company_id,
@@ -126,19 +134,21 @@ class SqliteApplicationRepository(IApplicationRepository):
 
     def create_application(
         self,
+        title: str,
+        experience_level: ExperienceLevel,
         location: JobLocation,
         job_type: JobType,
-        experience_level: ExperienceLevel,
+        skills: list[str],
         description: str,
-        company_id: int,
+        company_id: int
     ) -> Application | None:
         cursor = self.connection.cursor()
-
+        skills_encoded = ','.join(skills)
         res = cursor.execute(
             "INSERT INTO application "
-            "(location, job_type, experience_level, description, views, company_id) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (location, job_type, experience_level, description, 0, company_id),
+            "(title, location, job_type, experience_level, description, skills, views, company_id) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (title, location, job_type, experience_level, description, skills_encoded, 0, company_id),
         )
 
         self.connection.commit()
@@ -189,26 +199,31 @@ class SqliteApplicationRepository(IApplicationRepository):
     def update_application(
         self,
         id: int,
+        title: str,
         location: JobLocation,
         job_type: JobType,
         experience_level: ExperienceLevel,
+        skills: list[str],
         description: str,
     ) -> Application | None:
         application = self.get_application(id=id)
 
         if application is None:
             return None
+        skills_encoded = ','.join(skills)
 
         cursor = self.connection.cursor()
 
         res = cursor.execute(
             "UPDATE application "
-            "   SET location = ?, "
+            "   SET title = ?, "
+            "       location = ?, "
             "       job_type = ?, "
             "       experience_level = ?, "
+            "       skills = ?, "
             "       description = ?"
             " WHERE id = ?",
-            (location, job_type, experience_level, description, id),
+            (title, str(location), str(job_type), str(experience_level), skills_encoded, description, id),
         )
 
         self.connection.commit()
