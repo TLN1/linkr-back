@@ -24,16 +24,17 @@ class OrganizationSize(StrEnum):
 
 
 class JobLocation(StrEnum):
-    ON_SITE = "on-site"
-    REMOTE = "remote"
+    ON_SITE = "On-site"
+    REMOTE = "Remote"
+    HYBRID = "Hybrid"
 
     def __str__(self) -> str:
         return self.value
 
 
 class JobType(StrEnum):
-    PART_TIME = "part-time"
-    FULL_TIME = "full-time"
+    PART_TIME = "Part-time"
+    FULL_TIME = "Full-time"
 
     def __str__(self) -> str:
         return self.value
