@@ -1,6 +1,12 @@
 from typing import Protocol
 
-from app.core.models import Application, ExperienceLevel, JobLocation, JobType
+from app.core.models import (
+    Application,
+    ExperienceLevel,
+    JobLocation,
+    JobType,
+    Preference,
+)
 
 
 class IApplicationRepository(Protocol):
@@ -15,6 +21,11 @@ class IApplicationRepository(Protocol):
         pass
 
     def get_application(self, id: int) -> Application | None:
+        pass
+
+    def get_swipe_applications(
+        self, limit: int, preference: Preference
+    ) -> list[Application]:
         pass
 
     def get_company_applications(self, company_id: int) -> list[Application]:
