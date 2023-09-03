@@ -2,8 +2,17 @@ import json
 from dataclasses import dataclass, field
 from sqlite3 import Connection
 
-from app.core.models import Education, Experience, Preference, Skill, User, Industry, JobType, JobLocation, \
-    ExperienceLevel
+from app.core.models import (
+    Education,
+    Experience,
+    ExperienceLevel,
+    Industry,
+    JobLocation,
+    JobType,
+    Preference,
+    Skill,
+    User,
+)
 from app.core.repository.user import IUserRepository
 
 
@@ -51,12 +60,20 @@ class SqliteUserRepository(IUserRepository):
         cursor.execute(
             "INSERT INTO user (username, education, skills, experience, preference) "
             "VALUES (?, ?, ?, ?, ?)",
-            (username, json.dumps([]), json.dumps([]), json.dumps([]), json.dumps({
-                    "industry": [],
-                    "job_type": [],
-                    "job_location": [],
-                    "experience_level": []
-                }))
+            (
+                username,
+                json.dumps([]),
+                json.dumps([]),
+                json.dumps([]),
+                json.dumps(
+                    {
+                        "industry": [],
+                        "job_type": [],
+                        "job_location": [],
+                        "experience_level": [],
+                    }
+                ),
+            ),
         )
         self.connection.commit()
         return User(username=username)
@@ -121,7 +138,10 @@ class SqliteUserRepository(IUserRepository):
             industry=[Industry(i) for i in preference_dict["industry"]],
             job_type=[JobType(i) for i in preference_dict["job_type"]],
             job_location=[JobLocation(i) for i in preference_dict["job_location"]],
-            experience_level=[ExperienceLevel(i) for i in preference_dict["experience_level"]])
+            experience_level=[
+                ExperienceLevel(i) for i in preference_dict["experience_level"]
+            ],
+        )
         print(preference.industry)
 
         return User(
@@ -129,7 +149,7 @@ class SqliteUserRepository(IUserRepository):
             education=education_list,
             skills=skills_list,
             experience=experience_list,
-            preference=preference
+            preference=preference,
         )
 
     def has_user(self, username: str) -> bool:
