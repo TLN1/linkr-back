@@ -9,32 +9,42 @@ from app.core.repository.match import IMatchRepository
 class SqliteMatchRepository(IMatchRepository):
     connection: Connection
 
-    def _get_swipe_list_users(self, amount: int) -> list[User]:
+    def get_swipe_list_users(self, application_id: int, amount: int) -> list[User]:
         cursor = self.connection.cursor()
 
         res = cursor.execute(
-            "SELECT (u.username)"
-            "  FROM user u"
-            "  LEFT JOIN swipe s on u.username = s.username "
-            " WHERE (s.swipe_for IS NULL AND s.direction IS NULL)"
-            "    OR NOT (s.swipe_for == ? AND s.direction == ?)"
-            " ORDER BY random()"
-            " LIMIT ?",
-            [SwipeFor.USER, SwipeDirection.RIGHT, amount],
+            """
+            SELECT (u.username, u.education, u.experience, u.skills)
+              FROM user u
+              LEFT JOIN swipe s on u.username = s.username
+             WHERE (s.swipe_for IS NULL AND s.direction IS NULL)
+            OR NOT (s.swipe_for == ? AND s.direction == ? AND s.application_id = ?)
+             ORDER BY random()
+             LIMIT ?;
+            """,
+            [SwipeFor.USER, SwipeDirection.RIGHT, amount, application_id],
         )
 
+        result = []
+
+        for username, education, experience, skills in res.fetchall():
+            # TODO: add preferences if needed :)
+            user = User(
+                username=username,
+                education=education,
+                experience=experience,
+                skills=skills,
+            )
+
+            result.append(user)
+
         cursor.close()
+        return result
 
-    def _get_swipe_list_applications(self, amount: int) -> list[Application]:
+    def get_swipe_list_applications(
+        self, swiper_username: str, preference: Preference, amount: int
+    ) -> list[Application]:
         return []
-
-    def get_swipe_list(
-        self, swipe_for: SwipeFor, amount: int, preference: Preference
-    ) -> list[Application] | list[User]:
-        if swipe_for == SwipeFor.USER:
-            return self._get_swipe_list_users(amount=amount)
-        elif swipe_for == SwipeFor.APPLICATION:
-            return self._get_swipe_list_applications(amount=amount)
 
     def swipe(
         self,
@@ -46,9 +56,10 @@ class SqliteMatchRepository(IMatchRepository):
         cursor = self.connection.cursor()
 
         cursor.execute(
-            "INSERT INTO swipe "
-            "(username, application_id, swipe_for, direction)"
-            "VALUES (?, ?, ?, ?)",
+            """
+            INSERT INTO swipe (username, application_id, swipe_for, direction)
+            VALUES (?, ?, ?, ?);
+            """,
             (username, application_id, swipe_for, direction),
         )
 

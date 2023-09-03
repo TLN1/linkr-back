@@ -12,7 +12,7 @@ class TokenResponse(BaseModel):
 
 @dataclass
 class ApplicationsResponse(BaseModel):
-    application: list[Application]
+    applications: list[Application]
 
 
 @dataclass
