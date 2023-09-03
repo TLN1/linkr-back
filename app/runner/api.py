@@ -469,7 +469,6 @@ def swipe_list_users(
     swipe_response = core.get_swipe_list_users(
         swiper_application_id=swiper_application_id, amount=amount
     )
-    print(swipe_response.response_content)
     handle_response_status_code(response, swipe_response)
     return swipe_response.response_content
 
