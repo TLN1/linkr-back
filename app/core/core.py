@@ -8,9 +8,10 @@ from app.core.models import (
     ApplicationId,
     Industry,
     OrganizationSize,
+    Preference,
     SwipeDirection,
     SwipeFor,
-    Preference
+    UserChats,
 )
 from app.core.requests import (
     ApplicationInteractionRequest,
@@ -296,3 +297,7 @@ class Core:
         if chat is None:
             pass
         return CoreResponse(status=status, response_content=chat)
+
+    def get_user_chats(self, account: Account) -> CoreResponse:
+        status, user_chats = self.chat_service.get_user_chats(username=account.username)
+        return CoreResponse(status=status, response_content=UserChats(chats=user_chats))

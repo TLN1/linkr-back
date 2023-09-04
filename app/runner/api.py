@@ -21,16 +21,20 @@ from app.core.models import (
     Account,
     Application,
     ApplicationId,
+    Chat,
     Company,
     ExperienceLevel,
     Industry,
+    JobLocation,
+    JobType,
+    Message,
     OrganizationSize,
     Preference,
     SwipeDirection,
     SwipeFor,
     Token,
-    User, JobType, JobLocation,
-    Message, Chat,
+    User,
+    UserChats,
 )
 from app.core.requests import (
     ApplicationInteractionRequest,
@@ -59,10 +63,10 @@ from app.infra.auth_utils import oauth2_scheme, pwd_context
 from app.infra.db_setup import ConnectionProvider
 from app.infra.repository.account import SqliteAccountRepository
 from app.infra.repository.application import SqliteApplicationRepository
+from app.infra.repository.chat import InMemoryChatRepository
 from app.infra.repository.company import SqliteCompanyRepository
 from app.infra.repository.match import SqliteMatchRepository
 from app.infra.repository.user import SqliteUserRepository
-from app.infra.repository.chat import InMemoryChatRepository
 
 app = FastAPI()
 
@@ -132,7 +136,7 @@ def get_core() -> Core:
             company_repository=company_repository, account_repository=account_repository
         ),
         match_service=MatchService(match_repository=match_repository),
-        chat_service=chat_service
+        chat_service=chat_service,
     )
 
 
@@ -562,7 +566,7 @@ def swipe_user(
 @app.get(
     "/chat/{recipient_username}",
     responses={200: {}, 404: {}, 500: {}},
-    response_model=Chat
+    response_model=Chat,
 )
 def get_messages(
     response: Response,
@@ -574,28 +578,49 @@ def get_messages(
 
     account = application_context.get_current_user(token)
 
-    status, chat = chat_service.get_chat(username1=account.username, username2=recipient_username)
-    if chat is None:
-        chat_service.create_chat(username1=account.username, username2=recipient_username)
+    # todo: remove
 
-    get_messages_response = core.get_messages(account=account, recipient_username=recipient_username)
+    status, chat = chat_service.get_chat(
+        username1=account.username, username2=recipient_username
+    )
+    if chat is None:
+        chat_service.create_chat(
+            username1=account.username, username2=recipient_username
+        )
+
+    get_messages_response = core.get_messages(
+        account=account, recipient_username=recipient_username
+    )
     handle_response_status_code(response, get_messages_response)
     return get_messages_response.response_content
 
 
+@app.get("/chats", responses={200: {}, 404: {}, 500: {}}, response_model=UserChats)
+def get_user_chats(
+    response: Response,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    application_context: IApplicationContext = Depends(get_application_context),
+    core: Core = Depends(get_core),
+) -> BaseModel:
+    account = application_context.get_current_user(token)
+    user_chats_response = core.get_user_chats(account=account)
+    handle_response_status_code(response, user_chats_response)
+    return user_chats_response.response_content
+
+
 class UserConnectionManager:
-    def __init__(self):
+    def __init__(self) -> None:
         self.active_connections: dict[str, WebSocket] = {}
 
-    async def connect(self, username: str, websocket: WebSocket):
+    async def connect(self, username: str, websocket: WebSocket) -> None:
         await websocket.accept()
         if not self.active_connections.keys().__contains__(username):
             self.active_connections[username] = websocket
 
-    def disconnect(self, username: str):
+    def disconnect(self, username: str) -> None:
         self.active_connections.pop(username)
 
-    async def send_personal_message(self, username: str, message: dict):
+    async def send_personal_message(self, username: str, message: dict) -> None:
         if username in self.active_connections:
             websocket = self.active_connections[username]
             await websocket.send_json(message)

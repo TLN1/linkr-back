@@ -15,18 +15,18 @@ class ChatService:
         if self.user_repository.has_user(
             username=username1
         ) and self.user_repository.has_user(username=username2):
-            chat: Chat = self.chat_repository.create_chat(
+            chat: Chat | None = self.chat_repository.create_chat(
                 username1=username1, username2=username2
             )
-            if chat is None:
-                return Status.USER_NOT_FOUND, None
-            return Status.OK, chat
+            if chat is not None:
+                return Status.OK, chat
+        return Status.USER_NOT_FOUND, None
 
     def get_chat(self, username1: str, username2: str) -> tuple[Status, Chat | None]:
         if self.user_repository.has_user(
             username=username1
         ) and self.user_repository.has_user(username=username2):
-            chat: Chat = self.chat_repository.get_chat(
+            chat: Chat | None = self.chat_repository.get_chat(
                 username1=username1, username2=username2
             )
             if chat is None:
@@ -45,8 +45,8 @@ class ChatService:
             if not self.chat_repository.add_message(message=message):
                 return Status.USER_NOT_FOUND
             return Status.OK
+        return Status.USER_NOT_FOUND
 
     def get_user_chats(self, username: str) -> tuple[Status, list[Chat]]:
         user_chats: list[Chat] = self.chat_repository.get_user_chats(username=username)
         return Status.OK, user_chats
-

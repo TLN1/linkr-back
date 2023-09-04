@@ -189,4 +189,8 @@ class Chat(BaseModel):
     chat_id: int
     username1: str
     username2: str
-    message_list: list[Message] = []
+    message_list: list[Message] = Field(default_factory=list)
+
+
+class UserChats(BaseModel):
+    chats: list[Chat] = Field(default_factory=list)
