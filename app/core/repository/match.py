@@ -4,9 +4,12 @@ from app.core.models import Application, Preference, SwipeDirection, SwipeFor, U
 
 
 class IMatchRepository(Protocol):
-    def get_swipe_list(
-        self, swipe_for: SwipeFor, amount: int, preference: Preference
-    ) -> list[Application] | list[User]:
+    def get_swipe_list_users(self, application_id: int, amount: int) -> list[User]:
+        pass
+
+    def get_swipe_list_applications(
+        self, swiper_username: str, preference: Preference, amount: int
+    ) -> list[Application]:
         pass
 
     def swipe(

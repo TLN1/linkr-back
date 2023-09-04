@@ -19,7 +19,6 @@ from app.core.models import (
     OrganizationSize,
     Preference,
     SwipeDirection,
-    SwipeFor,
     Token,
     User, JobType, JobLocation,
 )
@@ -35,7 +34,7 @@ from app.core.requests import (
     UpdatePreferencesRequest,
     UpdateUserRequest,
 )
-from app.core.responses import CoreResponse
+from app.core.responses import CoreResponse, SwipeListResponse
 from app.core.services.account import AccountService
 from app.core.services.application import ApplicationService
 from app.core.services.company import CompanyService
@@ -488,19 +487,39 @@ def delete_company(
     handle_response_status_code(response, delete_response)
 
 
-@app.get("/swipe/list", responses={200: {}, 500: {}})
-def swipe_list(
+@app.get(
+    "/swipe/list/users", responses={200: {}, 404: {}}, response_model=SwipeListResponse
+)
+def swipe_list_users(
     response: Response,
-    swipe_for: SwipeFor,
+    swiper_application_id: int,
+    amount: int,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    application_context: IApplicationContext = Depends(get_application_context),
+    core: Core = Depends(get_core),
+) -> BaseModel:
+    _ = application_context.get_current_user(token)
+    swipe_response = core.get_swipe_list_users(
+        swiper_application_id=swiper_application_id, amount=amount
+    )
+    handle_response_status_code(response, swipe_response)
+    return swipe_response.response_content
+
+
+@app.get(
+    "/swipe/list/applications",
+    responses={200: {}, 404: {}},
+    response_model=SwipeListResponse,
+)
+def swipe_list_applications(
+    response: Response,
     amount: int,
     token: Annotated[str, Depends(oauth2_scheme)],
     application_context: IApplicationContext = Depends(get_application_context),
     core: Core = Depends(get_core),
 ) -> BaseModel:
     account = application_context.get_current_user(token)
-    swipe_response = core.get_swipe_list(
-        swipe_for=swipe_for, amount=amount, account=account
-    )
+    swipe_response = core.get_swipe_list_applications(account=account, amount=amount)
     handle_response_status_code(response, swipe_response)
     return swipe_response.response_content
 
