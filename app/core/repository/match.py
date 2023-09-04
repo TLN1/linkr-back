@@ -7,6 +7,9 @@ class IMatchRepository(Protocol):
     def get_swipe_list_users(self, application_id: int, amount: int) -> list[User]:
         pass
 
+    def get_right_swiped_list_users(self, username: str) -> dict[str, list[str]]:
+        pass
+
     def get_swipe_list_applications(
         self, swiper_username: str, preference: Preference, amount: int
     ) -> list[Application]:
