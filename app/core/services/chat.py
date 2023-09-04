@@ -45,3 +45,8 @@ class ChatService:
             if not self.chat_repository.add_message(message=message):
                 return Status.USER_NOT_FOUND
             return Status.OK
+
+    def get_user_chats(self, username: str) -> tuple[Status, list[Chat]]:
+        user_chats: list[Chat] = self.chat_repository.get_user_chats(username=username)
+        return Status.OK, user_chats
+

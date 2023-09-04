@@ -15,3 +15,6 @@ class IChatRepository(Protocol):
 
     def add_message(self, message: Message) -> bool:
         pass
+
+    def get_user_chats(self, username: str) -> list[Chat]:
+        pass

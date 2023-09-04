@@ -46,3 +46,10 @@ class InMemoryChatRepository(IChatRepository):
                 chat.message_list.append(message)
                 return True
         return False
+
+    def get_user_chats(self, username: str) -> list[Chat]:
+        user_chats: list[Chat] = []
+        for chat in self.chat_lists:
+            if chat.username2 == username or chat.username1 == username:
+                user_chats.append(chat)
+        return user_chats
