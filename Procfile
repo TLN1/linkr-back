@@ -1,1 +1,1 @@
-web: uvicorn app.runner.api:app
+web: uvicorn app.runner.api:app --host=0.0.0.0 --port=${PORT:-5000}
