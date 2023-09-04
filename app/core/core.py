@@ -16,6 +16,7 @@ from app.core.requests import (
 from app.core.responses import CoreResponse
 from app.core.services.account import AccountService
 from app.core.services.application import ApplicationService
+from app.core.services.chat import ChatService
 from app.core.services.company import CompanyService
 from app.core.services.user import UserService
 
@@ -26,6 +27,7 @@ class Core:
     company_service: CompanyService
     application_service: ApplicationService
     user_service: UserService
+    chat_service: ChatService
 
     def register(self, request: RegisterRequest) -> CoreResponse:
         status, account = self.account_service.register(
@@ -189,3 +191,9 @@ class Core:
             account=account, company_id=company_id
         )
         return CoreResponse(status=status)
+
+    def get_messages(self, account: Account, recipient_username: str) -> CoreResponse:
+        status, chat = self.chat_service.get_chat(account.username, recipient_username)
+        if chat is None:
+            pass
+        return CoreResponse(status=status, response_content=chat)

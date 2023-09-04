@@ -32,6 +32,7 @@ class ChatService:
             if chat is None:
                 return Status.USER_NOT_FOUND, None
             return Status.OK, chat
+        return Status.USER_NOT_FOUND, None
 
     def send_message(self, message: Message) -> Status:
         if (

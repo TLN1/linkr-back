@@ -35,7 +35,7 @@ from app.core.models import (
     Skill,
     Token,
     User,
-    Message,
+    Message, Chat,
 )
 from app.core.requests import (
     ApplicationInteractionRequest,
@@ -101,6 +101,10 @@ in_memory_oauth_application_context = InMemoryOauthApplicationContext(
 )
 in_memory_chat_repository = InMemoryChatRepository([])
 
+chat_service = ChatService(
+    user_repository=in_memory_user_repository, chat_repository=in_memory_chat_repository
+)
+
 
 def get_application_context() -> IApplicationContext:
     return in_memory_oauth_application_context
@@ -121,6 +125,7 @@ def get_core() -> Core:
         company_service=CompanyService(
             company_repository=in_memory_company_repository,
         ),
+        chat_service=chat_service
     )
 
 
@@ -475,6 +480,30 @@ def delete_company(
     handle_response_status_code(response, delete_response)
 
 
+@app.get(
+    "/chat/{recipient_username}",
+    responses={200: {}, 404: {}, 500: {}},
+    response_model=Chat
+)
+def get_messages(
+    response: Response,
+    recipient_username: str,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    application_context: IApplicationContext = Depends(get_application_context),
+    core: Core = Depends(get_core),
+) -> BaseModel:
+
+    account = application_context.get_current_user(token)
+
+    status, chat = chat_service.get_chat(username1=account.username, username2=recipient_username)
+    if chat is None:
+        chat_service.create_chat(username1=account.username, username2=recipient_username)
+
+    get_messages_response = core.get_messages(account=account, recipient_username=recipient_username)
+    handle_response_status_code(response, get_messages_response)
+    return get_messages_response.response_content
+
+
 class UserConnectionManager:
     def __init__(self):
         self.active_connections: dict[str, WebSocket] = {}
@@ -484,52 +513,49 @@ class UserConnectionManager:
         if not self.active_connections.keys().__contains__(username):
             self.active_connections[username] = websocket
 
-    # def disconnect(self, username: str):
-    #     if username in self.active_connections:
-    #         del self.active_connections[username]
+    def disconnect(self, username: str):
+        self.active_connections.pop(username)
 
     async def send_personal_message(self, username: str, message: dict):
         if username in self.active_connections:
             websocket = self.active_connections[username]
             await websocket.send_json(message)
 
-    # async def broadcast(self, message: dict):
-    #     for websocket in self.active_connections.values():
-    #         await websocket.send_json(message)
-
-    # async def get_connected_users(self) -> List[int]:
-    #     return list(self.active_connections.keys())
-
 
 manager = UserConnectionManager()
-chat_service = ChatService(
-    user_repository=in_memory_user_repository,
-    chat_repository=in_memory_chat_repository)
+
 
 @app.websocket("/register/ws/{username}")
 async def websocket_endpoint(websocket: WebSocket):
-    username = websocket.path_params.get("username");
+    username = websocket.path_params.get("username")
     await manager.connect(username, websocket)
-    while True:
-        data = await websocket.receive_text()
-        message_data = json.loads(data)
-        user = message_data.get("user")
-        time = message_data.get("time")
-        text = message_data.get("text")
-        message: Message = Message(sender_username=username, recipient_username=user, time=time, text=text,)
-        status, chat = chat_service.get_chat(username1=username, username2=user)
-        if chat is None:
-            chat_service.create_chat(username1=username, username2=user)
-
-        if chat_service.send_message(message=message):
-            await manager.send_personal_message(
-                username=user,
-                message={
-                    "user": websocket.base_url.username,
-                    "time": time,
-                    "text": text,
-                },
+    try:
+        while True:
+            data = await websocket.receive_text()
+            message_data = json.loads(data)
+            user = message_data.get("user")
+            time = message_data.get("time")
+            text = message_data.get("text")
+            message: Message = Message(
+                sender_username=username,
+                recipient_username=user,
+                time=time,
+                text=text,
             )
 
-        else:
-            await websocket.send_json({"error": "error sending message"})
+            if chat_service.send_message(message=message):
+                await manager.send_personal_message(
+                    username=user,
+                    message={
+                        "user": websocket.base_url.username,
+                        "time": time,
+                        "text": text,
+                    },
+                )
+
+            else:
+                await websocket.send_json({"error": "error sending message"})
+    except WebSocketDisconnect:
+        manager.disconnect(username)
+        # message = {"time": current_time, "clientId": client_id, "message": "Offline"}
+        # await manager.broadcast(json.dumps(message))
