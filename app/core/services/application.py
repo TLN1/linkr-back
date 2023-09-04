@@ -1,15 +1,7 @@
 from dataclasses import dataclass
 
 from app.core.constants import Status
-from app.core.models import (
-    Account,
-    Application,
-    Benefit,
-    ExperienceLevel,
-    JobLocation,
-    JobType,
-    Requirement,
-)
+from app.core.models import Application, ExperienceLevel, JobLocation, JobType
 from app.core.repository.application import IApplicationRepository
 
 
@@ -20,19 +12,22 @@ class ApplicationService:
 
     def create_application(
         self,
-        account: Account,
+        title: str,
         location: JobLocation,
         job_type: JobType,
         experience_level: ExperienceLevel,
-        requirements: list[Requirement],
-        benefits: list[Benefit],
+        skills: list[str],
+        description: str,
+        company_id: int,
     ) -> tuple[Status, Application | None]:
         application = self.application_repository.create_application(
+            title=title,
             location=location,
             job_type=job_type,
             experience_level=experience_level,
-            requirements=requirements,
-            benefits=benefits,
+            skills=skills,
+            description=description,
+            company_id=company_id,
         )
 
         if application is None:
@@ -49,24 +44,25 @@ class ApplicationService:
 
     def update_application(
         self,
-        account: Account,
         id: int,
+        title: str,
         location: JobLocation,
         job_type: JobType,
         experience_level: ExperienceLevel,
-        requirements: list[Requirement],
-        benefits: list[Benefit],
+        skills: list[str],
+        description: str,
     ) -> tuple[Status, Application | None]:
         if not self.application_repository.has_application(id=id):
             return Status.APPLICATION_DOES_NOT_EXIST, None
 
         application = self.application_repository.update_application(
             id=id,
+            title=title,
             location=location,
             job_type=job_type,
             experience_level=experience_level,
-            requirements=requirements,
-            benefits=benefits,
+            skills=skills,
+            description=description,
         )
 
         if application is None:
@@ -74,7 +70,7 @@ class ApplicationService:
 
         return Status.OK, application
 
-    def application_interaction(self, account: Account, id: int) -> Status:
+    def application_interaction(self, id: int) -> Status:
         if not self.application_repository.has_application(id=id):
             return Status.APPLICATION_DOES_NOT_EXIST
 
@@ -83,7 +79,7 @@ class ApplicationService:
 
         return Status.OK
 
-    def delete_application(self, account: Account, id: int) -> Status:
+    def delete_application(self, id: int) -> Status:
         if not self.application_repository.has_application(id=id):
             return Status.APPLICATION_DOES_NOT_EXIST
 
@@ -91,3 +87,6 @@ class ApplicationService:
             return Status.APPLICATION_DELETE_ERROR
 
         return Status.OK
+
+    def get_applications(self, company_id: int) -> list[Application]:
+        return self.application_repository.get_company_applications(company_id)

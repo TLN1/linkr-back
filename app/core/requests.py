@@ -3,13 +3,14 @@ from dataclasses import dataclass, field
 # TODO maybe implement builder pattern for building requests
 from app.core.models import (
     Account,
-    Benefit,
+    Education,
+    Experience,
     ExperienceLevel,
     Industry,
     JobLocation,
     JobType,
     OrganizationSize,
-    Requirement,
+    Skill,
     User,
 )
 
@@ -48,23 +49,25 @@ class LogoutRequest(AccountRequest):
 
 
 @dataclass
-class CreateApplicationRequest(AccountRequest):
-    location: JobLocation = JobLocation.ON_SITE
-    job_type: JobType = JobType.FULL_TIME
-    experience_level: ExperienceLevel = ExperienceLevel.JUNIOR
-    requirements: list[Requirement] = field(default_factory=list)
-    benefits: list[Benefit] = field(default_factory=list)
-    company_id: int = 0
+class CreateApplicationRequest:
+    title: str
+    company_id: int
+    location: JobLocation
+    job_type: JobType
+    experience_level: ExperienceLevel
+    description: str
+    skills: list[str] = field(default_factory=list)
 
 
 @dataclass
-class UpdateApplicationRequest(AccountRequest):
+class UpdateApplicationRequest:
     id: int
-    location: JobLocation = JobLocation.ON_SITE
-    job_type: JobType = JobType.FULL_TIME
-    experience_level: ExperienceLevel = ExperienceLevel.JUNIOR
-    requirements: list[Requirement] = field(default_factory=list)
-    benefits: list[Benefit] = field(default_factory=list)
+    title: str
+    location: JobLocation
+    job_type: JobType
+    experience_level: ExperienceLevel
+    skills: list[str]
+    description: str
 
 
 @dataclass
@@ -91,3 +94,19 @@ class CreateCompanyRequest:
     organization_size: OrganizationSize
     image_uri: str
     cover_image_uri: str
+
+
+@dataclass
+class UpdateUserRequest:
+    username: str
+    education: list[Education] = field(default_factory=list)
+    skills: list[Skill] = field(default_factory=list)
+    experience: list[Experience] = field(default_factory=list)
+
+
+@dataclass
+class UpdatePreferencesRequest:
+    industry: list[Industry] = field(default_factory=list)
+    job_location: list[JobLocation] = field(default_factory=list)
+    job_type: list[JobType] = field(default_factory=list)
+    experience_level: list[ExperienceLevel] = field(default_factory=list)

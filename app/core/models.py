@@ -1,12 +1,24 @@
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
+# TODO: maybe replace Enums with StrEnums?
+
+
+class SwipeFor(StrEnum):
+    USER = "user"
+    APPLICATION = "application"
+
+
+class SwipeDirection(StrEnum):
+    LEFT = "left"
+    RIGHT = "right"
+
 
 # TODO: ADD VALUES
-class Industry(Enum):
+class Industry(StrEnum):
     SOFTWARE_ENGINEERING = "Software Engineering"
 
     def __str__(self) -> str:
@@ -14,33 +26,63 @@ class Industry(Enum):
 
 
 # TODO: ADD VALUES
-class OrganizationSize(Enum):
+class OrganizationSize(StrEnum):
     SMALL = "1-10 employees"
 
     def __str__(self) -> str:
         return self.value
 
 
-class JobLocation(Enum):
-    ON_SITE = "on-site"
-    REMOTE = "remote"
+class JobLocation(StrEnum):
+    ON_SITE = "On-site"
+    REMOTE = "Remote"
+    HYBRID = "Hybrid"
+
+    def __str__(self) -> str:
+        return self.value
 
 
-class JobType(Enum):
-    PART_TIME = "part-time"
-    FULL_TIME = "full-time"
+class JobType(StrEnum):
+    PART_TIME = "Part-time"
+    FULL_TIME = "Full-time"
+
+    def __str__(self) -> str:
+        return self.value
 
 
-class ExperienceLevel(Enum):
-    INTERN = "intern"
-    JUNIOR = "junior"
-    MIDDLE = "middle"
-    SENIOR = "senior"
-    LEAD = "lead"
+class ExperienceLevel(StrEnum):
+    INTERN = "Intern"
+    JUNIOR = "Junior"
+    MIDDLE = "Middle"
+    SENIOR = "Senior"
+    LEAD = "Lead"
+
+    def __str__(self) -> str:
+        return self.value
 
 
-class Benefit(BaseModel):
-    pass
+class Application(BaseModel):
+    id: int
+    title: str
+    location: JobLocation
+    job_type: JobType
+    experience_level: ExperienceLevel
+    skills: list[str]
+    description: str
+    company_id: int
+    views: int = 0
+
+    def update(
+        self,
+        location: JobLocation,
+        job_type: JobType,
+        experience_level: ExperienceLevel,
+        description: str,
+    ) -> None:
+        self.location = location
+        self.job_type = job_type
+        self.experience_level = experience_level
+        self.description = description
 
 
 class Company(BaseModel):
@@ -51,10 +93,11 @@ class Company(BaseModel):
     organization_size: OrganizationSize
     image_uri: str
     cover_image_uri: str
-    applications: list[int] = Field(default_factory=list)
+    owner_username: str
+    applications: list[Application] = Field(default_factory=list)
 
     def link_application(self, application: Application) -> None:
-        self.applications.append(application.id)
+        self.applications.append(application)
 
 
 class Preference(BaseModel):
@@ -84,7 +127,7 @@ class User(BaseModel):
     education: list[Education] = Field(default_factory=list)
     skills: list[Skill] = Field(default_factory=list)
     experience: list[Experience] = Field(default_factory=list)
-    preference: Preference = Preference()
+    preference: Preference = Field(default_factory=Preference)
 
     def update(
         self,
@@ -100,45 +143,22 @@ class User(BaseModel):
 
 
 class Account(BaseModel):
-    id: int
     username: str
     password: str
-    companies: list[int] = Field(default_factory=list)
-    applications: list[int] = Field(default_factory=list)
+    companies: list[Company] = Field(default_factory=list)
 
     def link_company(self, company: Company) -> None:
-        self.companies.append(company.id)
+        self.companies.append(company)
 
-    def link_application(self, application: Application) -> None:
-        self.applications.append(application.id)
+    def has_company_with_id(self, company_id: int) -> bool:
+        filtered = list(
+            filter(lambda company: company.id == company_id, self.companies)
+        )
+        return len(filtered) > 0
 
 
-class Requirement(BaseModel):
-    pass
-
-
-class Application(BaseModel):
-    id: int
-    location: JobLocation
-    job_type: JobType
-    experience_level: ExperienceLevel
-    requirements: list[Requirement]
-    benefits: list[Benefit]
-    views: int = 0
-
-    def update(
-        self,
-        location: JobLocation,
-        job_type: JobType,
-        experience_level: ExperienceLevel,
-        requirements: list[Requirement],
-        benefits: list[Benefit],
-    ) -> None:
-        self.location = location
-        self.job_type = job_type
-        self.experience_level = experience_level
-        self.requirements = requirements
-        self.benefits = benefits
+class SwipeList(BaseModel):
+    swipe_list: list[Application] | list[User] = Field(default_factory=list)
 
 
 class ApplicationId(BaseModel):
