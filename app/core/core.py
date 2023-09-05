@@ -7,6 +7,7 @@ from app.core.models import (
     Account,
     ApplicationId,
     Industry,
+    Matched,
     OrganizationSize,
     Preference,
     SwipeDirection,
@@ -309,7 +310,7 @@ class Core:
         if matched:
             self._match(username=swiper_username, application_id=application_id)
 
-        return CoreResponse(status=status)
+        return CoreResponse(status=status, response_content=Matched(matched=matched))
 
     def swipe_user(
         self,
@@ -336,4 +337,4 @@ class Core:
         if matched:
             self._match(username=swiped_username, application_id=swiper_application_id)
 
-        return CoreResponse(status=status)
+        return CoreResponse(status=status, response_content=Matched(matched=matched))
