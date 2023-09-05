@@ -32,7 +32,7 @@ from app.core.requests import (
     SetupUserRequest,
     UpdateApplicationRequest,
     UpdatePreferencesRequest,
-    UpdateUserRequest,
+    UpdateUserRequest, SwipeApplicationRequest, SwipeUserRequest,
 )
 from app.core.responses import CoreResponse, SwipeListResponse
 from app.core.services.account import AccountService
@@ -527,8 +527,7 @@ def swipe_list_applications(
 @app.put("/swipe/application")
 def swipe_application(
     response: Response,
-    application_id: int,
-    direction: SwipeDirection,
+    request: SwipeApplicationRequest,
     token: Annotated[str, Depends(oauth2_scheme)],
     application_context: IApplicationContext = Depends(get_application_context),
     core: Core = Depends(get_core),
@@ -536,8 +535,8 @@ def swipe_application(
     account = application_context.get_current_user(token)
     swipe_response = core.swipe_application(
         swiper_username=account.username,
-        application_id=application_id,
-        direction=direction,
+        application_id=request.application_id,
+        direction=request.direction,
     )
     handle_response_status_code(response, swipe_response)
 
@@ -545,17 +544,15 @@ def swipe_application(
 @app.put("/swipe/user")
 def swipe_user(
     response: Response,
-    application_id: int,
-    swiped_username: str,
-    direction: SwipeDirection,
+    request: SwipeUserRequest,
     token: Annotated[str, Depends(oauth2_scheme)],
     application_context: IApplicationContext = Depends(get_application_context),
     core: Core = Depends(get_core),
 ) -> None:
     _ = application_context.get_current_user(token)
     swipe_response = core.swipe_user(
-        swiper_application_id=application_id,
-        swiped_username=swiped_username,
-        direction=direction,
+        swiper_application_id=request.application_id,
+        swiped_username=request.swiped_username,
+        direction=request.direction,
     )
     handle_response_status_code(response, swipe_response)
