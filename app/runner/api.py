@@ -411,6 +411,7 @@ def create_company(
         website=request.website,
         industry=request.industry,
         organization_size=request.organization_size,
+        description=request.description,
         image_uri=request.image_uri,
         cover_image_uri=request.cover_image_uri,
     )

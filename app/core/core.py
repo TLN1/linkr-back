@@ -173,6 +173,7 @@ class Core:
         website: str,
         industry: Industry,
         organization_size: OrganizationSize,
+        description: str,
         image_uri: str,
         cover_image_uri: str,
     ) -> CoreResponse:
@@ -181,6 +182,7 @@ class Core:
             website=website,
             industry=industry,
             organization_size=organization_size,
+            description=description,
             image_uri=image_uri,
             cover_image_uri=cover_image_uri,
             owner_username=account.username,
@@ -204,6 +206,7 @@ class Core:
         company_id: int,
         name: str,
         website: str,
+        description: str,
         industry: Industry,
         organization_size: OrganizationSize,
         image_uri: str,
@@ -216,6 +219,7 @@ class Core:
             website=website,
             industry=industry,
             organization_size=organization_size,
+            description=description,
             image_uri=image_uri,
             cover_image_uri=cover_image_uri,
         )

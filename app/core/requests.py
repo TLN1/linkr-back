@@ -66,6 +66,7 @@ class UpdateApplicationRequest:
     location: JobLocation
     job_type: JobType
     experience_level: ExperienceLevel
+    description: str
     skills: list[str]
     description: str
 
@@ -92,6 +93,7 @@ class CreateCompanyRequest:
     website: str
     industry: Industry
     organization_size: OrganizationSize
+    description: str
     image_uri: str
     cover_image_uri: str
 

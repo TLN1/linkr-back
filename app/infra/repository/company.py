@@ -38,14 +38,14 @@ class InMemoryCompanyRepository(ICompanyRepository):
         return result
 
     def create_company(
-        self,
-        name: str,
-        website: str,
-        industry: Industry,
-        organization_size: OrganizationSize,
-        image_uri: str,
-        cover_image_uri: str,
-        owner_username: str,
+            self,
+            name: str,
+            website: str,
+            industry: Industry,
+            organization_size: OrganizationSize,
+            image_uri: str,
+            cover_image_uri: str,
+            owner_username: str,
     ) -> Company | None:
         self.companies.append(
             Company(
@@ -62,14 +62,15 @@ class InMemoryCompanyRepository(ICompanyRepository):
         return self.companies[-1]
 
     def update_company(
-        self,
-        company_id: int,
-        name: str,
-        website: str,
-        industry: Industry,
-        organization_size: OrganizationSize,
-        image_uri: str,
-        cover_image_uri: str,
+            self,
+            company_id: int,
+            name: str,
+            website: str,
+            industry: Industry,
+            organization_size: OrganizationSize,
+            description: str,
+            image_uri: str,
+            cover_image_uri: str,
     ) -> Company | None:
         for company in self.companies:
             if company.id == company_id:
@@ -111,14 +112,14 @@ class SqliteCompanyRepository(ICompanyRepository):
     def get_company(self, company_id: int) -> Company | None:
         cursor = self.connection.cursor()
         for (
-            c_id,
-            name,
-            website,
-            industry,
-            organization_size,
-            image_uri,
-            cover_image_uri,
-            owner_username,
+                c_id,
+                name,
+                website,
+                industry,
+                organization_size,
+                image_uri,
+                cover_image_uri,
+                owner_username,
         ) in cursor.execute("SELECT * FROM company WHERE id = ?", (company_id,)):
             company = Company(
                 id=c_id,
@@ -142,14 +143,14 @@ class SqliteCompanyRepository(ICompanyRepository):
         result = []
         cursor = self.connection.cursor()
         for (
-            c_id,
-            name,
-            website,
-            industry,
-            organization_size,
-            image_uri,
-            cover_image_uri,
-            owner_username,
+                c_id,
+                name,
+                website,
+                industry,
+                organization_size,
+                image_uri,
+                cover_image_uri,
+                owner_username,
         ) in cursor.execute(
             "SELECT * FROM company WHERE owner_username = ?", (username,)
         ):
@@ -172,26 +173,28 @@ class SqliteCompanyRepository(ICompanyRepository):
         return result
 
     def create_company(
-        self,
-        name: str,
-        website: str,
-        industry: Industry,
-        organization_size: OrganizationSize,
-        image_uri: str,
-        cover_image_uri: str,
-        owner_username: str,
+            self,
+            name: str,
+            website: str,
+            industry: Industry,
+            organization_size: OrganizationSize,
+            description: str,
+            image_uri: str,
+            cover_image_uri: str,
+            owner_username: str,
     ) -> Company | None:
         company = None
         cursor = self.connection.cursor()
         cursor.execute(
-            "INSERT INTO company (company_name, website, industry, organization_size, "
+            "INSERT INTO company (company_name, website, industry, organization_size, descrition, "
             "image_uri, cover_image_uri, owner_username) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (
                 name,
                 website,
                 str(industry),
                 str(organization_size),
+                description,
                 image_uri,
                 cover_image_uri,
                 owner_username,
@@ -199,14 +202,14 @@ class SqliteCompanyRepository(ICompanyRepository):
         )
 
         for (
-            c_id,
-            name,
-            website,
-            industry,
-            organization_size,
-            image_uri,
-            cover_image_uri,
-            owner_username,
+                c_id,
+                name,
+                website,
+                industry,
+                organization_size,
+                image_uri,
+                cover_image_uri,
+                owner_username,
         ) in cursor.execute("SELECT * FROM company ORDER BY id DESC LIMIT 1;"):
             company = Company(
                 id=c_id,
@@ -224,20 +227,21 @@ class SqliteCompanyRepository(ICompanyRepository):
         return company
 
     def update_company(
-        self,
-        company_id: int,
-        name: str,
-        website: str,
-        industry: Industry,
-        organization_size: OrganizationSize,
-        image_uri: str,
-        cover_image_uri: str,
+            self,
+            company_id: int,
+            name: str,
+            website: str,
+            industry: Industry,
+            organization_size: OrganizationSize,
+            description: str,
+            image_uri: str,
+            cover_image_uri: str,
     ) -> Company | None:
         cursor = self.connection.cursor()
         cursor.execute(
             "UPDATE company SET company_name = ?, website = ?, industry = ?, "
             "organization_size = ?, "
-            "image_uri = ?, cover_image_uri = ? "
+            "image_uri = ?, cover_image_uri = ?, description = ? "
             "WHERE id = ?",
             (
                 name,
@@ -246,6 +250,7 @@ class SqliteCompanyRepository(ICompanyRepository):
                 str(organization_size),
                 image_uri,
                 cover_image_uri,
+                description,
                 company_id,
             ),
         )

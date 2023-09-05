@@ -11,26 +11,28 @@ class ICompanyRepository(Protocol):
         pass
 
     def create_company(
-        self,
-        name: str,
-        website: str,
-        industry: Industry,
-        organization_size: OrganizationSize,
-        image_uri: str,
-        cover_image_uri: str,
-        owner_username: str,
+            self,
+            name: str,
+            website: str,
+            industry: Industry,
+            organization_size: OrganizationSize,
+            description: str,
+            image_uri: str,
+            cover_image_uri: str,
+            owner_username: str,
     ) -> Company | None:
         pass
 
     def update_company(
-        self,
-        company_id: int,
-        name: str,
-        website: str,
-        industry: Industry,
-        organization_size: OrganizationSize,
-        image_uri: str,
-        cover_image_uri: str,
+            self,
+            company_id: int,
+            name: str,
+            website: str,
+            industry: Industry,
+            organization_size: OrganizationSize,
+            description: str,
+            image_uri: str,
+            cover_image_uri: str,
     ) -> Company | None:
         pass
 

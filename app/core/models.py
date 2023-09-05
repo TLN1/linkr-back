@@ -76,6 +76,7 @@ class Company(BaseModel):
     website: str
     industry: Industry
     organization_size: OrganizationSize
+    description: str
     image_uri: str
     cover_image_uri: str
     owner_username: str
