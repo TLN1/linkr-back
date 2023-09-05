@@ -3,11 +3,13 @@ from dataclasses import dataclass
 from app.core.constants import Status
 from app.core.models import Application, Preference, SwipeDirection, SwipeFor, User
 from app.core.repository.match import IMatchRepository
+from app.core.services.recommender_service import RecommenderService
 
 
 @dataclass
 class MatchService:
     match_repository: IMatchRepository
+    recommender_service: RecommenderService = RecommenderService()
 
     def get_swipe_list_users(
         self, swiper_application_id: int, amount: int
@@ -17,13 +19,25 @@ class MatchService:
         )
         return Status.OK, swipe_list
 
+    def get_right_swiped_list_applications(
+        self, swiper_username: str,
+    ) -> tuple[Status, list[Application]]:
+        swipe_list = self.match_repository.get_right_swiped_list_applications(
+            username=swiper_username
+        )
+        return Status.OK, swipe_list
+
     def get_swipe_list_applications(
         self, swiper_username: str, preference: Preference, amount: int
     ) -> tuple[Status, list[Application]]:
         swipe_list = self.match_repository.get_swipe_list_applications(
-            swiper_username=swiper_username, preference=preference, amount=amount
+            swiper_username=swiper_username, preference=preference, amount=10000
         )
-        return Status.OK, swipe_list
+        right_swiped_list = self.get_right_swiped_list_applications(swiper_username)[1]
+        swipe_list = self.recommender_service.get_recommendations(username=swiper_username, swipe_list=swipe_list,
+                                                                  right_swiped_list=right_swiped_list)
+
+        return Status.OK, swipe_list[:amount]
 
     # Return true if matched, otherwise return false
     def swipe_application(
