@@ -16,11 +16,13 @@ from app.core.models import (
     Company,
     ExperienceLevel,
     Industry,
+    JobLocation,
+    JobType,
+    Matched,
     OrganizationSize,
     Preference,
-    SwipeDirection,
     Token,
-    User, JobType, JobLocation,
+    User,
 )
 from app.core.requests import (
     ApplicationInteractionRequest,
@@ -30,6 +32,8 @@ from app.core.requests import (
     GetApplicationRequest,
     RegisterRequest,
     SetupUserRequest,
+    SwipeApplicationRequest,
+    SwipeUserRequest,
     UpdateApplicationRequest,
     UpdatePreferencesRequest,
     UpdateUserRequest,
@@ -210,6 +214,8 @@ async def update_user(
             account=account,
             user=User(
                 username=update_user_request.username,
+                image_uri=update_user_request.image_uri,
+                cover_image_uri=update_user_request.cover_image_uri,
                 education=update_user_request.education,
                 skills=update_user_request.skills,
                 experience=update_user_request.experience,
@@ -361,17 +367,17 @@ def get_industries() -> list[str]:
 
 @app.get("/job_location", responses={200: {}})
 def get_job_locations() -> list[str]:
-    return [j.value for j in JobLocation]
+    return [j for j in JobLocation]
 
 
 @app.get("/job_type", responses={200: {}})
 def get_job_types() -> list[str]:
-    return [j.value for j in JobType]
+    return [j for j in JobType]
 
 
 @app.get("/experience_level", responses={200: {}})
 def get_experience_level() -> list[str]:
-    return [e.value for e in ExperienceLevel]
+    return [e for e in ExperienceLevel]
 
 
 @app.get("/organization-size", responses={200: {}})
@@ -524,38 +530,37 @@ def swipe_list_applications(
     return swipe_response.response_content
 
 
-@app.put("/swipe/application")
+@app.put("/swipe/application", response_model=Matched)
 def swipe_application(
     response: Response,
-    application_id: int,
-    direction: SwipeDirection,
+    request: SwipeApplicationRequest,
     token: Annotated[str, Depends(oauth2_scheme)],
     application_context: IApplicationContext = Depends(get_application_context),
     core: Core = Depends(get_core),
-) -> None:
+) -> BaseModel:
     account = application_context.get_current_user(token)
     swipe_response = core.swipe_application(
         swiper_username=account.username,
-        application_id=application_id,
-        direction=direction,
+        application_id=request.application_id,
+        direction=request.direction,
     )
     handle_response_status_code(response, swipe_response)
+    return swipe_response.response_content
 
 
-@app.put("/swipe/user")
+@app.put("/swipe/user", response_model=Matched)
 def swipe_user(
     response: Response,
-    application_id: int,
-    swiped_username: str,
-    direction: SwipeDirection,
+    request: SwipeUserRequest,
     token: Annotated[str, Depends(oauth2_scheme)],
     application_context: IApplicationContext = Depends(get_application_context),
     core: Core = Depends(get_core),
-) -> None:
+) -> BaseModel:
     _ = application_context.get_current_user(token)
     swipe_response = core.swipe_user(
-        swiper_application_id=application_id,
-        swiped_username=swiped_username,
-        direction=direction,
+        swiper_application_id=request.application_id,
+        swiped_username=request.swiped_username,
+        direction=request.direction,
     )
     handle_response_status_code(response, swipe_response)
+    return swipe_response.response_content

@@ -117,9 +117,12 @@ class SqliteMatchRepository(IMatchRepository):
     ) -> list[Application]:
         cursor = self.connection.cursor()
 
-        # TODO: add filtering with preferences
+        location_mask = ",".join("?" * len(preference.job_location))
+        job_type_mask = ",".join("?" * len(preference.job_type))
+        experience_level_mask = ",".join("?" * len(preference.experience_level))
+
         res = cursor.execute(
-            """
+            f"""
             SELECT a.id, a.title, a.location, a.job_type, a.experience_level,
                    a.description, a.skills, a.views, a.company_id
               FROM application a
@@ -129,6 +132,9 @@ class SqliteMatchRepository(IMatchRepository):
                     (s.swipe_for IS NULL AND s.direction IS NULL)
                     OR NOT (s.swipe_for == ? AND s.direction == ?)
                    )
+               AND a.location IN ({location_mask})
+               AND a.job_type IN ({job_type_mask})
+               AND a.experience_level IN ({experience_level_mask})
              ORDER BY random()
              LIMIT ?;
             """,
@@ -136,6 +142,9 @@ class SqliteMatchRepository(IMatchRepository):
                 swiper_username,
                 SwipeFor.APPLICATION,
                 SwipeDirection.RIGHT,
+                *preference.job_location,
+                *preference.job_type,
+                *preference.experience_level,
                 amount,
             ],
         )
@@ -211,3 +220,35 @@ class SqliteMatchRepository(IMatchRepository):
 
         self.connection.commit()
         cursor.close()
+
+    def matched(self, username: str, application_id: int) -> bool:
+        cursor = self.connection.cursor()
+
+        res = cursor.execute(
+            """
+            SELECT * FROM swipe
+             WHERE username = ?
+               AND application_id = ?
+               AND direction = ?
+               AND swipe_for = ?;
+            """,
+            [username, application_id, SwipeDirection.RIGHT, SwipeFor.APPLICATION],
+        )
+
+        user_liked_application = res.fetchone() is not None
+
+        res = cursor.execute(
+            """
+            SELECT * FROM swipe
+             WHERE username = ?
+               AND application_id = ?
+               AND direction = ?
+               AND swipe_for = ?;
+            """,
+            [username, application_id, SwipeDirection.RIGHT, SwipeFor.USER],
+        )
+
+        application_liked_user = res.fetchone() is not None
+
+        cursor.close()
+        return user_liked_application and application_liked_user

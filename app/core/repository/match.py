@@ -23,3 +23,6 @@ class IMatchRepository(Protocol):
         swipe_for: SwipeFor,
     ) -> None:
         pass
+
+    def matched(self, username: str, application_id: int) -> bool:
+        pass

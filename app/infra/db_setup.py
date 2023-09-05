@@ -43,6 +43,8 @@ def create_tables(cursor: Cursor, connection: Connection) -> None:
         CREATE TABLE IF NOT EXISTS user(
             id INTEGER PRIMARY KEY,
             username TEXT NOT NULL,
+            image_uri TEXT,
+            cover_image_uri TEXT,
             education TEXT,
             skills TEXT,
             experience TEXT,
