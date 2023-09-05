@@ -591,16 +591,6 @@ def get_messages(
 
     account = application_context.get_current_user(token)
 
-    # todo: remove
-
-    status, chat = chat_service.get_chat(
-        username1=account.username, username2=recipient_username
-    )
-    if chat is None:
-        chat_service.create_chat(
-            username1=account.username, username2=recipient_username
-        )
-
     get_messages_response = core.get_messages(
         account=account, recipient_username=recipient_username
     )

@@ -288,7 +288,7 @@ class Core:
             return
 
         if username != user.username:
-            # TODO: open chat
+            self.chat_service.create_chat(username, user.username)
             print(f"Chat between user: {username} and user: {user.username}")
 
     def swipe_application(
