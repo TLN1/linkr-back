@@ -65,13 +65,38 @@ class SqliteMatchRepository(IMatchRepository):
         cursor.close()
         return result
 
+    def get_not_right_swiped_list_users(self, username: str) -> dict[str, list[str]]:
+        cursor = self.connection.cursor()
+
+        res = cursor.execute(
+            """
+            SELECT s.application_id, a.location, a.job_type, a.experience_level, a.industry
+            FROM APPLICATION a
+            LEFT JOIN swipe s ON a.id = s.application_id
+            WHERE s.username = ?
+            AND s.direction != ?
+            """,
+            [username, SwipeDirection.RIGHT],
+        )
+        result = {"application_id": [], "location": [], "job_type": [], "experience_level": [], "industry": []}
+        for application_id, industry, location, job_type, experience_level in res.fetchall():
+            result["application_id"].append(application_id)
+            result["industry"].append(industry)
+            result["location"].append(location)
+            result["job_type"].append(job_type)
+            result["experience_level"].append(experience_level)
+
+        cursor.close()
+        return result
+
     def get_right_swiped_list_users(self, username: str) -> dict[str, list[str]]:
         cursor = self.connection.cursor()
 
         res = cursor.execute(
             """
             SELECT s.application_id, a.location, a.job_type, a.experience_level, a.industry
-            LEFT JOIN APPLICATION a on s.application_id = a.id
+            FROM LATERAL swipe s
+            LEFT JOIN APPLICATION a ON s.application_id = a.id
             WHERE s.username = ?
             """,
             [username],
