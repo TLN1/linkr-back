@@ -11,6 +11,7 @@ from app.core.models import (
     OrganizationSize,
     Preference,
     SwipeDirection,
+    UserChats,
 )
 from app.core.requests import (
     ApplicationInteractionRequest,
@@ -25,6 +26,7 @@ from app.core.requests import (
 from app.core.responses import ApplicationsResponse, CoreResponse, SwipeListResponse
 from app.core.services.account import AccountService
 from app.core.services.application import ApplicationService
+from app.core.services.chat import ChatService
 from app.core.services.company import CompanyService
 from app.core.services.match import MatchService
 from app.core.services.user import UserService
@@ -37,6 +39,7 @@ class Core:
     application_service: ApplicationService
     user_service: UserService
     match_service: MatchService
+    chat_service: ChatService
 
     def register(self, request: RegisterRequest) -> CoreResponse:
         status, account = self.account_service.register(
@@ -285,7 +288,7 @@ class Core:
             return
 
         if username != user.username:
-            # TODO: open chat
+            self.chat_service.create_chat(username, user.username)
             print(f"Chat between user: {username} and user: {user.username}")
 
     def swipe_application(
@@ -338,3 +341,13 @@ class Core:
             self._match(username=swiped_username, application_id=swiper_application_id)
 
         return CoreResponse(status=status, response_content=Matched(matched=matched))
+
+    def get_messages(self, account: Account, recipient_username: str) -> CoreResponse:
+        status, chat = self.chat_service.get_chat(account.username, recipient_username)
+        if chat is None:
+            pass
+        return CoreResponse(status=status, response_content=chat)
+
+    def get_user_chats(self, account: Account) -> CoreResponse:
+        status, user_chats = self.chat_service.get_user_chats(username=account.username)
+        return CoreResponse(status=status, response_content=UserChats(chats=user_chats))
