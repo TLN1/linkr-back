@@ -269,10 +269,22 @@ class Core:
         )
 
     def _match(self, username: str, application_id: int) -> None:
-        print(f"Match user: {username} with application_id: {application_id}")
-        # TODO: fetch owner of application id
+        status, application = self.application_service.get_application(
+            id=application_id
+        )
+        if status != Status.OK or application is None:
+            return
+
+        company = self.company_service.get_company(company_id=application.company_id)
+        if company is None:
+            return
+
+        status, user = self.user_service.get_user(username=company.owner_username)
+        if status != Status.OK or user is None:
+            return
+
         # TODO: open chat
-        pass
+        print(f"Chat between user: {username} and user: {user.username}")
 
     def swipe_application(
         self, swiper_username: str, application_id: int, direction: SwipeDirection
@@ -292,8 +304,6 @@ class Core:
             application_id=application_id,
             direction=direction,
         )
-
-        print(matched)
 
         if matched:
             self._match(username=swiper_username, application_id=application_id)
@@ -322,7 +332,6 @@ class Core:
             direction=direction,
         )
 
-        print(matched)
         if matched:
             self._match(username=swiped_username, application_id=swiper_application_id)
 
