@@ -103,9 +103,7 @@ account_repository = SqliteAccountRepository(
     company_repository=company_repository,
     connection=ConnectionProvider.get_connection(),
 )
-in_memory_chat_repository = SqliteChatRepository(
-    connection=ConnectionProvider.get_connection()
-)
+chat_repository = SqliteChatRepository(connection=ConnectionProvider.get_connection())
 
 in_memory_application_context = InMemoryApplicationContext(
     account_repository=account_repository, hash_verifier=pwd_context.verify
@@ -115,7 +113,7 @@ in_memory_oauth_application_context = InMemoryOauthApplicationContext(
 )
 
 chat_service = ChatService(
-    user_repository=user_repository, chat_repository=in_memory_chat_repository
+    user_repository=user_repository, chat_repository=chat_repository
 )
 
 

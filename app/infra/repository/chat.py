@@ -129,9 +129,10 @@ class SqliteChatRepository(IChatRepository):
         res = cursor.execute(
             """
             SELECT * FROM chat
-             WHERE username1 = ? AND username2 = ?
+             WHERE (username1 = ? AND username2 = ?)
+                OR (username1 = ? AND username2 = ?)
             """,
-            [username1, username2],
+            [username1, username2, username2, username1],
         )
 
         row = res.fetchone()
