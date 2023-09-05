@@ -166,6 +166,7 @@ class TokenData(BaseModel):
 
 
 class Message(BaseModel):
+    message_id: int
     sender_username: str
     recipient_username: str
     time: str

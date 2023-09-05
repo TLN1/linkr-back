@@ -2,7 +2,14 @@ import json
 from typing import Annotated
 
 import uvicorn
-from fastapi import Depends, FastAPI, HTTPException, Response, WebSocket, WebSocketDisconnect
+from fastapi import (
+    Depends,
+    FastAPI,
+    HTTPException,
+    Response,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
@@ -57,7 +64,7 @@ from app.infra.auth_utils import oauth2_scheme, pwd_context
 from app.infra.db_setup import ConnectionProvider
 from app.infra.repository.account import SqliteAccountRepository
 from app.infra.repository.application import SqliteApplicationRepository
-from app.infra.repository.chat import InMemoryChatRepository
+from app.infra.repository.chat import SqliteChatRepository
 from app.infra.repository.company import SqliteCompanyRepository
 from app.infra.repository.match import SqliteMatchRepository
 from app.infra.repository.user import SqliteUserRepository
@@ -96,6 +103,9 @@ account_repository = SqliteAccountRepository(
     company_repository=company_repository,
     connection=ConnectionProvider.get_connection(),
 )
+in_memory_chat_repository = SqliteChatRepository(
+    connection=ConnectionProvider.get_connection()
+)
 
 in_memory_application_context = InMemoryApplicationContext(
     account_repository=account_repository, hash_verifier=pwd_context.verify
@@ -103,7 +113,6 @@ in_memory_application_context = InMemoryApplicationContext(
 in_memory_oauth_application_context = InMemoryOauthApplicationContext(
     account_repository=account_repository, hash_verifier=pwd_context.verify
 )
-in_memory_chat_repository = InMemoryChatRepository([])
 
 chat_service = ChatService(
     user_repository=user_repository, chat_repository=in_memory_chat_repository
@@ -590,7 +599,6 @@ def get_messages(
     application_context: IApplicationContext = Depends(get_application_context),
     core: Core = Depends(get_core),
 ) -> BaseModel:
-
     account = application_context.get_current_user(token)
 
     get_messages_response = core.get_messages(

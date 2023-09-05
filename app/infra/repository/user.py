@@ -58,7 +58,8 @@ class SqliteUserRepository(IUserRepository):
     def create_user(self, username: str) -> User | None:
         cursor = self.connection.cursor()
         cursor.execute(
-            "INSERT INTO user (username, image_uri, cover_image_uri, education, skills, experience, preference) "
+            "INSERT INTO user (username, image_uri, cover_image_uri, "
+            "education, skills, experience, preference) "
             "VALUES (?, ?, ?, ?, ?, ?, ?)",
             (
                 username,
@@ -83,7 +84,8 @@ class SqliteUserRepository(IUserRepository):
     def update_user(self, username: str, user: User) -> User | None:
         cursor = self.connection.cursor()
         cursor.execute(
-            "UPDATE user SET education = ?, skills = ?, experience = ?, image_uri = ?, cover_image_uri = ? "
+            "UPDATE user SET education = ?, skills = ?, "
+            "experience = ?, image_uri = ?, cover_image_uri = ? "
             "WHERE username = ?",
             (
                 json.dumps(
