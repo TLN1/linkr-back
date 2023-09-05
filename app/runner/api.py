@@ -2,14 +2,7 @@ import json
 from typing import Annotated
 
 import uvicorn
-from fastapi import (
-    Depends,
-    FastAPI,
-    HTTPException,
-    Response,
-    WebSocket,
-    WebSocketDisconnect,
-)
+from fastapi import Depends, FastAPI, HTTPException, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
@@ -27,11 +20,10 @@ from app.core.models import (
     Industry,
     JobLocation,
     JobType,
+    Matched,
     Message,
     OrganizationSize,
     Preference,
-    SwipeDirection,
-    SwipeFor,
     Token,
     User,
     UserChats,
@@ -44,11 +36,13 @@ from app.core.requests import (
     GetApplicationRequest,
     RegisterRequest,
     SetupUserRequest,
+    SwipeApplicationRequest,
+    SwipeUserRequest,
     UpdateApplicationRequest,
     UpdatePreferencesRequest,
     UpdateUserRequest,
 )
-from app.core.responses import CoreResponse
+from app.core.responses import CoreResponse, SwipeListResponse
 from app.core.services.account import AccountService
 from app.core.services.application import ApplicationService
 from app.core.services.chat import ChatService
@@ -509,58 +503,77 @@ def delete_company(
     handle_response_status_code(response, delete_response)
 
 
-@app.get("/swipe/list", responses={200: {}, 500: {}})
-def swipe_list(
+@app.get(
+    "/swipe/list/users", responses={200: {}, 404: {}}, response_model=SwipeListResponse
+)
+def swipe_list_users(
     response: Response,
-    swipe_for: SwipeFor,
+    swiper_application_id: int,
+    amount: int,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    application_context: IApplicationContext = Depends(get_application_context),
+    core: Core = Depends(get_core),
+) -> BaseModel:
+    _ = application_context.get_current_user(token)
+    swipe_response = core.get_swipe_list_users(
+        swiper_application_id=swiper_application_id, amount=amount
+    )
+    handle_response_status_code(response, swipe_response)
+    return swipe_response.response_content
+
+
+@app.get(
+    "/swipe/list/applications",
+    responses={200: {}, 404: {}},
+    response_model=SwipeListResponse,
+)
+def swipe_list_applications(
+    response: Response,
     amount: int,
     token: Annotated[str, Depends(oauth2_scheme)],
     application_context: IApplicationContext = Depends(get_application_context),
     core: Core = Depends(get_core),
 ) -> BaseModel:
     account = application_context.get_current_user(token)
-    swipe_response = core.get_swipe_list(
-        swipe_for=swipe_for, amount=amount, account=account
+    swipe_response = core.get_swipe_list_applications(account=account, amount=amount)
+    handle_response_status_code(response, swipe_response)
+    return swipe_response.response_content
+
+
+@app.put("/swipe/application", response_model=Matched)
+def swipe_application(
+    response: Response,
+    request: SwipeApplicationRequest,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    application_context: IApplicationContext = Depends(get_application_context),
+    core: Core = Depends(get_core),
+) -> BaseModel:
+    account = application_context.get_current_user(token)
+    swipe_response = core.swipe_application(
+        swiper_username=account.username,
+        application_id=request.application_id,
+        direction=request.direction,
     )
     handle_response_status_code(response, swipe_response)
     return swipe_response.response_content
 
 
-@app.put("/swipe/application")
-def swipe_application(
-    response: Response,
-    application_id: int,
-    direction: SwipeDirection,
-    token: Annotated[str, Depends(oauth2_scheme)],
-    application_context: IApplicationContext = Depends(get_application_context),
-    core: Core = Depends(get_core),
-) -> None:
-    account = application_context.get_current_user(token)
-    swipe_response = core.swipe_application(
-        swiper_username=account.username,
-        application_id=application_id,
-        direction=direction,
-    )
-    handle_response_status_code(response, swipe_response)
-
-
-@app.put("/swipe/user")
+@app.put("/swipe/user", response_model=Matched)
 def swipe_user(
     response: Response,
-    application_id: int,
-    swiped_username: str,
-    direction: SwipeDirection,
+    request: SwipeUserRequest,
     token: Annotated[str, Depends(oauth2_scheme)],
     application_context: IApplicationContext = Depends(get_application_context),
     core: Core = Depends(get_core),
-) -> None:
+) -> BaseModel:
     _ = application_context.get_current_user(token)
     swipe_response = core.swipe_user(
-        swiper_application_id=application_id,
-        swiped_username=swiped_username,
-        direction=direction,
+        swiper_application_id=request.application_id,
+        swiped_username=request.swiped_username,
+        direction=request.direction,
     )
     handle_response_status_code(response, swipe_response)
+    return swipe_response.response_content
 
 
 @app.get(

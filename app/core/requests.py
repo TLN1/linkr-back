@@ -11,6 +11,7 @@ from app.core.models import (
     JobType,
     OrganizationSize,
     Skill,
+    SwipeDirection,
     User,
 )
 
@@ -110,3 +111,16 @@ class UpdatePreferencesRequest:
     job_location: list[JobLocation] = field(default_factory=list)
     job_type: list[JobType] = field(default_factory=list)
     experience_level: list[ExperienceLevel] = field(default_factory=list)
+
+
+@dataclass
+class SwipeApplicationRequest:
+    application_id: int
+    direction: SwipeDirection
+
+
+@dataclass
+class SwipeUserRequest:
+    application_id: int
+    swiped_username: str
+    direction: SwipeDirection
