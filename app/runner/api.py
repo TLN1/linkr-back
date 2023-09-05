@@ -16,11 +16,13 @@ from app.core.models import (
     Company,
     ExperienceLevel,
     Industry,
+    JobLocation,
+    JobType,
+    Matched,
     OrganizationSize,
     Preference,
-    SwipeDirection,
     Token,
-    User, JobType, JobLocation,
+    User,
 )
 from app.core.requests import (
     ApplicationInteractionRequest,
@@ -30,9 +32,11 @@ from app.core.requests import (
     GetApplicationRequest,
     RegisterRequest,
     SetupUserRequest,
+    SwipeApplicationRequest,
+    SwipeUserRequest,
     UpdateApplicationRequest,
     UpdatePreferencesRequest,
-    UpdateUserRequest, SwipeApplicationRequest, SwipeUserRequest,
+    UpdateUserRequest,
 )
 from app.core.responses import CoreResponse, SwipeListResponse
 from app.core.services.account import AccountService
@@ -524,14 +528,14 @@ def swipe_list_applications(
     return swipe_response.response_content
 
 
-@app.put("/swipe/application")
+@app.put("/swipe/application", response_model=Matched)
 def swipe_application(
     response: Response,
     request: SwipeApplicationRequest,
     token: Annotated[str, Depends(oauth2_scheme)],
     application_context: IApplicationContext = Depends(get_application_context),
     core: Core = Depends(get_core),
-) -> None:
+) -> BaseModel:
     account = application_context.get_current_user(token)
     swipe_response = core.swipe_application(
         swiper_username=account.username,
@@ -539,16 +543,17 @@ def swipe_application(
         direction=request.direction,
     )
     handle_response_status_code(response, swipe_response)
+    return swipe_response.response_content
 
 
-@app.put("/swipe/user")
+@app.put("/swipe/user", response_model=Matched)
 def swipe_user(
     response: Response,
     request: SwipeUserRequest,
     token: Annotated[str, Depends(oauth2_scheme)],
     application_context: IApplicationContext = Depends(get_application_context),
     core: Core = Depends(get_core),
-) -> None:
+) -> BaseModel:
     _ = application_context.get_current_user(token)
     swipe_response = core.swipe_user(
         swiper_application_id=request.application_id,
@@ -556,3 +561,4 @@ def swipe_user(
         direction=request.direction,
     )
     handle_response_status_code(response, swipe_response)
+    return swipe_response.response_content

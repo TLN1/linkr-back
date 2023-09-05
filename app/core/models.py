@@ -127,6 +127,10 @@ class User(BaseModel):
         self.preference = preference
 
 
+class Matched(BaseModel):
+    matched: bool = False
+
+
 class Account(BaseModel):
     username: str
     password: str

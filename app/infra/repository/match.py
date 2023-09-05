@@ -164,3 +164,35 @@ class SqliteMatchRepository(IMatchRepository):
 
         self.connection.commit()
         cursor.close()
+
+    def matched(self, username: str, application_id: int) -> bool:
+        cursor = self.connection.cursor()
+
+        res = cursor.execute(
+            """
+            SELECT * FROM swipe
+             WHERE username = ?
+               AND application_id = ?
+               AND direction = ?
+               AND swipe_for = ?;
+            """,
+            [username, application_id, SwipeDirection.RIGHT, SwipeFor.APPLICATION],
+        )
+
+        user_liked_application = res.fetchone() is not None
+
+        res = cursor.execute(
+            """
+            SELECT * FROM swipe
+             WHERE username = ?
+               AND application_id = ?
+               AND direction = ?
+               AND swipe_for = ?;
+            """,
+            [username, application_id, SwipeDirection.RIGHT, SwipeFor.USER],
+        )
+
+        application_liked_user = res.fetchone() is not None
+
+        cursor.close()
+        return user_liked_application and application_liked_user
