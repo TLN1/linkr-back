@@ -109,6 +109,8 @@ class Skill(BaseModel):
 
 class User(BaseModel):
     username: str
+    image_uri: str = ""
+    cover_image_uri: str = ""
     education: list[Education] = Field(default_factory=list)
     skills: list[Skill] = Field(default_factory=list)
     experience: list[Experience] = Field(default_factory=list)

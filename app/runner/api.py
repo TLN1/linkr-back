@@ -214,6 +214,8 @@ async def update_user(
             account=account,
             user=User(
                 username=update_user_request.username,
+                image_uri=update_user_request.image_uri,
+                cover_image_uri=update_user_request.cover_image_uri,
                 education=update_user_request.education,
                 skills=update_user_request.skills,
                 experience=update_user_request.experience,
