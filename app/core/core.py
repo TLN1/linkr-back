@@ -283,8 +283,9 @@ class Core:
         if status != Status.OK or user is None:
             return
 
-        # TODO: open chat
-        print(f"Chat between user: {username} and user: {user.username}")
+        if username != user.username:
+            # TODO: open chat
+            print(f"Chat between user: {username} and user: {user.username}")
 
     def swipe_application(
         self, swiper_username: str, application_id: int, direction: SwipeDirection
