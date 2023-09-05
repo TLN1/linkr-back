@@ -25,27 +25,37 @@ class MatchService:
         )
         return Status.OK, swipe_list
 
+    # Return true if matched, otherwise return false
     def swipe_application(
         self, swiper_username: str, application_id: int, direction: SwipeDirection
-    ) -> Status:
+    ) -> tuple[Status, bool]:
         self.match_repository.swipe(
             username=swiper_username,
             application_id=application_id,
             direction=direction,
             swipe_for=SwipeFor.APPLICATION,
         )
-        return Status.OK
 
+        matched = direction == SwipeDirection.RIGHT and self.match_repository.matched(
+            username=swiper_username, application_id=application_id
+        )
+        return Status.OK, matched
+
+    # Return true if matched, otherwise return false
     def swipe_user(
         self,
         swiper_application_id: int,
         swiped_username: str,
         direction: SwipeDirection,
-    ) -> Status:
+    ) -> tuple[Status, bool]:
         self.match_repository.swipe(
             username=swiped_username,
             application_id=swiper_application_id,
             direction=direction,
             swipe_for=SwipeFor.USER,
         )
-        return Status.OK
+
+        matched = direction == SwipeDirection.RIGHT and self.match_repository.matched(
+            username=swiped_username, application_id=swiper_application_id
+        )
+        return Status.OK, matched

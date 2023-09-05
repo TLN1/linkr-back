@@ -11,7 +11,8 @@ from app.core.models import (
     JobType,
     OrganizationSize,
     Skill,
-    User, SwipeDirection,
+    SwipeDirection,
+    User,
 )
 
 

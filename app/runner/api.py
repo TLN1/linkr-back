@@ -16,11 +16,12 @@ from app.core.models import (
     Company,
     ExperienceLevel,
     Industry,
+    JobLocation,
+    JobType,
     OrganizationSize,
     Preference,
-    SwipeDirection,
     Token,
-    User, JobType, JobLocation,
+    User,
 )
 from app.core.requests import (
     ApplicationInteractionRequest,
@@ -30,9 +31,11 @@ from app.core.requests import (
     GetApplicationRequest,
     RegisterRequest,
     SetupUserRequest,
+    SwipeApplicationRequest,
+    SwipeUserRequest,
     UpdateApplicationRequest,
     UpdatePreferencesRequest,
-    UpdateUserRequest, SwipeApplicationRequest, SwipeUserRequest,
+    UpdateUserRequest,
 )
 from app.core.responses import CoreResponse, SwipeListResponse
 from app.core.services.account import AccountService

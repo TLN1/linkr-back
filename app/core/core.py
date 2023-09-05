@@ -8,8 +8,8 @@ from app.core.models import (
     ApplicationId,
     Industry,
     OrganizationSize,
+    Preference,
     SwipeDirection,
-    Preference
 )
 from app.core.requests import (
     ApplicationInteractionRequest,
@@ -268,6 +268,12 @@ class Core:
             status=status, response_content=SwipeListResponse(swipe_list=swipe_list)
         )
 
+    def _match(self, username: str, application_id: int) -> None:
+        print(f"Match user: {username} with application_id: {application_id}")
+        # TODO: fetch owner of application id
+        # TODO: open chat
+        pass
+
     def swipe_application(
         self, swiper_username: str, application_id: int, direction: SwipeDirection
     ) -> CoreResponse:
@@ -281,11 +287,17 @@ class Core:
         if status != Status.OK or user is None:
             return CoreResponse(status=status)
 
-        status = self.match_service.swipe_application(
+        status, matched = self.match_service.swipe_application(
             swiper_username=swiper_username,
             application_id=application_id,
             direction=direction,
         )
+
+        print(matched)
+
+        if matched:
+            self._match(username=swiper_username, application_id=application_id)
+
         return CoreResponse(status=status)
 
     def swipe_user(
@@ -304,9 +316,14 @@ class Core:
         if status != Status.OK or application is None:
             return CoreResponse(status=status)
 
-        status = self.match_service.swipe_user(
+        status, matched = self.match_service.swipe_user(
             swiper_application_id=swiper_application_id,
             swiped_username=swiped_username,
             direction=direction,
         )
+
+        print(matched)
+        if matched:
+            self._match(username=swiped_username, application_id=swiper_application_id)
+
         return CoreResponse(status=status)
