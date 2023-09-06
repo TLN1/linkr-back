@@ -22,10 +22,10 @@ class MatchService:
     def get_right_swiped_list_applications(
         self, swiper_username: str,
     ) -> tuple[Status, list[Application]]:
-        # swipe_list = self.match_repository.get_right_swiped_list_applications(
-        #     username=swiper_username
-        # )
-        return Status.OK, []
+        swipe_list = self.match_repository.get_right_swiped_list_applications(
+            username=swiper_username
+        )
+        return Status.OK, swipe_list
 
     def get_swipe_list_applications(
         self, swiper_username: str, preference: Preference, amount: int

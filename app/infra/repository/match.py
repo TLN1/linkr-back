@@ -72,9 +72,9 @@ class SqliteMatchRepository(IMatchRepository):
             """
             SELECT a.id, a.title, a.location, a.job_type, a.experience_level,
                    a.description, a.skills, a.views, a.company_id
-            FROM LATERAL swipe s
+            FROM swipe s
             LEFT JOIN APPLICATION a ON s.application_id = a.id
-            WHERE s.username = ?
+            WHERE s.username = ?;
             """,
             [username],
         )
