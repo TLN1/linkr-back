@@ -20,11 +20,20 @@ class SwipeDirection(StrEnum):
 # TODO: ADD VALUES
 class Industry(StrEnum):
     SOFTWARE_ENGINEERING = "Software Engineering"
+    CUSTOMER_SERVICE = "Customer Service"
+    TAXI = "Taxi"
+    FINANCE_CONSULTING = "Financial Consulting"
+    IT_CONSULTING = "IT Consulting"
+    EDUCATION = "Education"
 
 
 # TODO: ADD VALUES
 class OrganizationSize(StrEnum):
     SMALL = "1-10 employees"
+    MEDIUM = "10-50 employees"
+    BIG = "50-100 employees"
+    LARGE = "100-1000 employees"
+    HUGE = "1000+ employees"
 
 
 class JobLocation(StrEnum):
