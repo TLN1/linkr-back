@@ -19,6 +19,6 @@ class Recommender:
         for i in range(liked_df.shape[0]):
             applications_df['similarity'] += np.dot(applications_df[cols], liked_df[cols].iloc[i]) / (
                     np.linalg.norm(applications_df[cols], axis=1) * np.linalg.norm(liked_df[cols].iloc[i]))
-        return applications_df.sort_values(by='similarity', ascending=False).drop(['similarity']).to_dict('list')
+        return applications_df.sort_values(by='similarity', ascending=False).drop(['similarity'], axis=1).to_dict('list')
 
 

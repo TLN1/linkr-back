@@ -23,18 +23,20 @@ class RecommenderService:
     recommender: Recommender = Recommender()
 
     def from_application_list_to_dict(self, applications: list[Application]) -> dict[str, list[str | int]]:
-        applications_dict: dict[str, list[str | int]] = {i: [] for i in applications[0].__dict__.keys()}
-        for application in applications:
-            for key, value in application.__dict__.items():
-                if key == 'location':
-                    applications_dict[key].append(LOCATIONS[value])
-                elif key == 'job_type':
-                    applications_dict[key].append(JOB_TYPES[value])
-                elif key == 'experience_level':
-                    applications_dict[key].append(EXPERIENCE_LEVELS[value])
-                else:
-                    applications_dict[key].append(value)
-        return applications_dict
+        if (len(applications) > 0 ):
+            applications_dict: dict[str, list[str | int]] = {i: [] for i in applications[0].__dict__.keys()}
+            for application in applications:
+                for key, value in application.__dict__.items():
+                    if key == 'location':
+                        applications_dict[key].append(LOCATIONS[value])
+                    elif key == 'job_type':
+                        applications_dict[key].append(JOB_TYPES[value])
+                    elif key == 'experience_level':
+                        applications_dict[key].append(EXPERIENCE_LEVELS[value])
+                    else:
+                        applications_dict[key].append(value)
+            return applications_dict
+        return {}
 
     def from_dict_to_application_list(self, applications_dict: dict[str, list[str | int]]) -> list[Application]:
         applications: list[Application] = []
@@ -59,4 +61,6 @@ class RecommenderService:
         liked = self.from_application_list_to_dict(right_swiped_list)
         applications = self.from_application_list_to_dict(swipe_list)
         recommendations = self.recommender.sort_by_relevance(liked, applications)
-        return self.from_dict_to_application_list(recommendations)
+        if len(recommendations):
+            return self.from_dict_to_application_list(recommendations)
+        return []
