@@ -58,10 +58,13 @@ class SqliteUserRepository(IUserRepository):
     def create_user(self, username: str) -> User | None:
         cursor = self.connection.cursor()
         cursor.execute(
-            "INSERT INTO user (username, education, skills, experience, preference) "
-            "VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO user (username, image_uri, cover_image_uri, "
+            "education, skills, experience, preference) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
             (
                 username,
+                "",
+                "",
                 json.dumps([]),
                 json.dumps([]),
                 json.dumps([]),
@@ -81,7 +84,8 @@ class SqliteUserRepository(IUserRepository):
     def update_user(self, username: str, user: User) -> User | None:
         cursor = self.connection.cursor()
         cursor.execute(
-            "UPDATE user SET education = ?, skills = ?, experience = ? "
+            "UPDATE user SET education = ?, skills = ?, "
+            "experience = ?, image_uri = ?, cover_image_uri = ? "
             "WHERE username = ?",
             (
                 json.dumps(
@@ -102,6 +106,8 @@ class SqliteUserRepository(IUserRepository):
                         for exp in user.experience
                     ]
                 ),
+                user.image_uri,
+                user.cover_image_uri,
                 username,
             ),
         )
@@ -114,26 +120,28 @@ class SqliteUserRepository(IUserRepository):
         cursor.execute("SELECT * FROM user WHERE username = ?", (username,))
         user_data = cursor.fetchone()
         username = user_data[1]
+        image_uri = user_data[2]
+        cover_image_uri = user_data[3]
 
-        educations = json.loads(user_data[2])
+        educations = json.loads(user_data[4])
         education_list = [
             Education(name=edu["name"], description=edu["description"])
             for edu in educations
         ]
 
-        skills = json.loads(user_data[3])
+        skills = json.loads(user_data[5])
         skills_list = [
             Skill(name=skill["name"], description=skill["description"])
             for skill in skills
         ]
 
-        experience = json.loads(user_data[4])
+        experience = json.loads(user_data[6])
         experience_list = [
             Experience(name=exp["name"], description=exp["description"])
             for exp in experience
         ]
 
-        preference_dict = json.loads(user_data[5])
+        preference_dict = json.loads(user_data[7])
         preference = Preference(
             industry=[Industry(i) for i in preference_dict["industry"]],
             job_type=[JobType(i) for i in preference_dict["job_type"]],
@@ -146,6 +154,8 @@ class SqliteUserRepository(IUserRepository):
 
         return User(
             username=username,
+            image_uri=image_uri,
+            cover_image_uri=cover_image_uri,
             education=education_list,
             skills=skills_list,
             experience=experience_list,

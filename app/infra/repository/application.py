@@ -28,10 +28,12 @@ class InMemoryApplicationRepository(IApplicationRepository):
         application_id = self._next_id()
         application = Application(
             id=application_id,
+            title=title,
             location=location,
             job_type=job_type,
             experience_level=experience_level,
             description=description,
+            skills=skills,
             company_id=company_id,
             views=0,
         )

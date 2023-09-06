@@ -1,7 +1,15 @@
+import json
 from typing import Annotated
 
 import uvicorn
-from fastapi import Depends, FastAPI, HTTPException, Response
+from fastapi import (
+    Depends,
+    FastAPI,
+    HTTPException,
+    Response,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
@@ -13,15 +21,19 @@ from app.core.models import (
     Account,
     Application,
     ApplicationId,
+    Chat,
     Company,
     ExperienceLevel,
     Industry,
+    JobLocation,
+    JobType,
+    Matched,
+    Message,
     OrganizationSize,
     Preference,
-    SwipeDirection,
-    SwipeFor,
     Token,
-    User, JobType, JobLocation,
+    User,
+    UserChats,
 )
 from app.core.requests import (
     ApplicationInteractionRequest,
@@ -31,13 +43,16 @@ from app.core.requests import (
     GetApplicationRequest,
     RegisterRequest,
     SetupUserRequest,
+    SwipeApplicationRequest,
+    SwipeUserRequest,
     UpdateApplicationRequest,
     UpdatePreferencesRequest,
     UpdateUserRequest,
 )
-from app.core.responses import CoreResponse
+from app.core.responses import CoreResponse, SwipeListResponse
 from app.core.services.account import AccountService
 from app.core.services.application import ApplicationService
+from app.core.services.chat import ChatService
 from app.core.services.company import CompanyService
 from app.core.services.match import MatchService
 from app.core.services.user import UserService
@@ -49,6 +64,7 @@ from app.infra.auth_utils import oauth2_scheme, pwd_context
 from app.infra.db_setup import ConnectionProvider
 from app.infra.repository.account import SqliteAccountRepository
 from app.infra.repository.application import SqliteApplicationRepository
+from app.infra.repository.chat import SqliteChatRepository
 from app.infra.repository.company import SqliteCompanyRepository
 from app.infra.repository.match import SqliteMatchRepository
 from app.infra.repository.user import SqliteUserRepository
@@ -87,12 +103,17 @@ account_repository = SqliteAccountRepository(
     company_repository=company_repository,
     connection=ConnectionProvider.get_connection(),
 )
+chat_repository = SqliteChatRepository(connection=ConnectionProvider.get_connection())
 
 in_memory_application_context = InMemoryApplicationContext(
     account_repository=account_repository, hash_verifier=pwd_context.verify
 )
 in_memory_oauth_application_context = InMemoryOauthApplicationContext(
     account_repository=account_repository, hash_verifier=pwd_context.verify
+)
+
+chat_service = ChatService(
+    user_repository=user_repository, chat_repository=chat_repository
 )
 
 
@@ -116,6 +137,7 @@ def get_core() -> Core:
             company_repository=company_repository, account_repository=account_repository
         ),
         match_service=MatchService(match_repository=match_repository),
+        chat_service=chat_service,
     )
 
 
@@ -211,6 +233,8 @@ async def update_user(
             account=account,
             user=User(
                 username=update_user_request.username,
+                image_uri=update_user_request.image_uri,
+                cover_image_uri=update_user_request.cover_image_uri,
                 education=update_user_request.education,
                 skills=update_user_request.skills,
                 experience=update_user_request.experience,
@@ -362,17 +386,17 @@ def get_industries() -> list[str]:
 
 @app.get("/job_location", responses={200: {}})
 def get_job_locations() -> list[str]:
-    return [j.value for j in JobLocation]
+    return [j for j in JobLocation]
 
 
 @app.get("/job_type", responses={200: {}})
 def get_job_types() -> list[str]:
-    return [j.value for j in JobType]
+    return [j for j in JobType]
 
 
 @app.get("/experience_level", responses={200: {}})
 def get_experience_level() -> list[str]:
-    return [e.value for e in ExperienceLevel]
+    return [e for e in ExperienceLevel]
 
 
 @app.get("/organization-size", responses={200: {}})
@@ -488,55 +512,165 @@ def delete_company(
     handle_response_status_code(response, delete_response)
 
 
-@app.get("/swipe/list", responses={200: {}, 500: {}})
-def swipe_list(
+@app.get(
+    "/swipe/list/users", responses={200: {}, 404: {}}, response_model=SwipeListResponse
+)
+def swipe_list_users(
     response: Response,
-    swipe_for: SwipeFor,
+    swiper_application_id: int,
+    amount: int,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    application_context: IApplicationContext = Depends(get_application_context),
+    core: Core = Depends(get_core),
+) -> BaseModel:
+    _ = application_context.get_current_user(token)
+    swipe_response = core.get_swipe_list_users(
+        swiper_application_id=swiper_application_id, amount=amount
+    )
+    handle_response_status_code(response, swipe_response)
+    return swipe_response.response_content
+
+
+@app.get(
+    "/swipe/list/applications",
+    responses={200: {}, 404: {}},
+    response_model=SwipeListResponse,
+)
+def swipe_list_applications(
+    response: Response,
     amount: int,
     token: Annotated[str, Depends(oauth2_scheme)],
     application_context: IApplicationContext = Depends(get_application_context),
     core: Core = Depends(get_core),
 ) -> BaseModel:
     account = application_context.get_current_user(token)
-    swipe_response = core.get_swipe_list(
-        swipe_for=swipe_for, amount=amount, account=account
+    swipe_response = core.get_swipe_list_applications(account=account, amount=amount)
+    handle_response_status_code(response, swipe_response)
+    return swipe_response.response_content
+
+
+@app.put("/swipe/application", response_model=Matched)
+def swipe_application(
+    response: Response,
+    request: SwipeApplicationRequest,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    application_context: IApplicationContext = Depends(get_application_context),
+    core: Core = Depends(get_core),
+) -> BaseModel:
+    account = application_context.get_current_user(token)
+    swipe_response = core.swipe_application(
+        swiper_username=account.username,
+        application_id=request.application_id,
+        direction=request.direction,
     )
     handle_response_status_code(response, swipe_response)
     return swipe_response.response_content
 
 
-@app.put("/swipe/application")
-def swipe_application(
-    response: Response,
-    application_id: int,
-    direction: SwipeDirection,
-    token: Annotated[str, Depends(oauth2_scheme)],
-    application_context: IApplicationContext = Depends(get_application_context),
-    core: Core = Depends(get_core),
-) -> None:
-    account = application_context.get_current_user(token)
-    swipe_response = core.swipe_application(
-        swiper_username=account.username,
-        application_id=application_id,
-        direction=direction,
-    )
-    handle_response_status_code(response, swipe_response)
-
-
-@app.put("/swipe/user")
+@app.put("/swipe/user", response_model=Matched)
 def swipe_user(
     response: Response,
-    application_id: int,
-    swiped_username: str,
-    direction: SwipeDirection,
+    request: SwipeUserRequest,
     token: Annotated[str, Depends(oauth2_scheme)],
     application_context: IApplicationContext = Depends(get_application_context),
     core: Core = Depends(get_core),
-) -> None:
+) -> BaseModel:
     _ = application_context.get_current_user(token)
     swipe_response = core.swipe_user(
-        swiper_application_id=application_id,
-        swiped_username=swiped_username,
-        direction=direction,
+        swiper_application_id=request.application_id,
+        swiped_username=request.swiped_username,
+        direction=request.direction,
     )
     handle_response_status_code(response, swipe_response)
+    return swipe_response.response_content
+
+
+@app.get(
+    "/chat/{recipient_username}",
+    responses={200: {}, 404: {}, 500: {}},
+    response_model=Chat,
+)
+def get_messages(
+    response: Response,
+    recipient_username: str,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    application_context: IApplicationContext = Depends(get_application_context),
+    core: Core = Depends(get_core),
+) -> BaseModel:
+    account = application_context.get_current_user(token)
+
+    get_messages_response = core.get_messages(
+        account=account, recipient_username=recipient_username
+    )
+    handle_response_status_code(response, get_messages_response)
+    return get_messages_response.response_content
+
+
+@app.get("/chats", responses={200: {}, 404: {}, 500: {}}, response_model=UserChats)
+def get_user_chats(
+    response: Response,
+    token: Annotated[str, Depends(oauth2_scheme)],
+    application_context: IApplicationContext = Depends(get_application_context),
+    core: Core = Depends(get_core),
+) -> BaseModel:
+    account = application_context.get_current_user(token)
+    user_chats_response = core.get_user_chats(account=account)
+    handle_response_status_code(response, user_chats_response)
+    return user_chats_response.response_content
+
+
+class UserConnectionManager:
+    def __init__(self) -> None:
+        self.active_connections: dict[str, WebSocket] = {}
+
+    async def connect(self, username: str, websocket: WebSocket) -> None:
+        await websocket.accept()
+        if not self.active_connections.keys().__contains__(username):
+            self.active_connections[username] = websocket
+
+    def disconnect(self, username: str) -> None:
+        self.active_connections.pop(username)
+
+    async def send_personal_message(self, username: str, message: dict) -> None:
+        if username in self.active_connections:
+            websocket = self.active_connections[username]
+            await websocket.send_json(message)
+
+
+manager = UserConnectionManager()
+
+
+@app.websocket("/register/ws/{username}")
+async def websocket_endpoint(websocket: WebSocket):
+    username = websocket.path_params.get("username")
+    await manager.connect(username, websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            message_data = json.loads(data)
+            user = message_data.get("user")
+            time = message_data.get("time")
+            text = message_data.get("text")
+            message: Message = Message(
+                sender_username=username,
+                recipient_username=user,
+                time=time,
+                text=text,
+            )
+
+            if chat_service.send_message(message=message):
+                await manager.send_personal_message(
+                    username=user,
+                    message={
+                        "user": websocket.base_url.username,
+                        "time": time,
+                        "text": text,
+                    },
+                )
+
+            else:
+                await websocket.send_json({"error": "error sending message"})
+    except WebSocketDisconnect:
+        manager.disconnect(username)
+        # message = {"time": current_time, "clientId": client_id, "message": "Offline"}
+        # await manager.broadcast(json.dumps(message))

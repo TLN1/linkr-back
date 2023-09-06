@@ -21,16 +21,10 @@ class SwipeDirection(StrEnum):
 class Industry(StrEnum):
     SOFTWARE_ENGINEERING = "Software Engineering"
 
-    def __str__(self) -> str:
-        return self.value
-
 
 # TODO: ADD VALUES
 class OrganizationSize(StrEnum):
     SMALL = "1-10 employees"
-
-    def __str__(self) -> str:
-        return self.value
 
 
 class JobLocation(StrEnum):
@@ -38,16 +32,10 @@ class JobLocation(StrEnum):
     REMOTE = "Remote"
     HYBRID = "Hybrid"
 
-    def __str__(self) -> str:
-        return self.value
-
 
 class JobType(StrEnum):
     PART_TIME = "Part-time"
     FULL_TIME = "Full-time"
-
-    def __str__(self) -> str:
-        return self.value
 
 
 class ExperienceLevel(StrEnum):
@@ -56,9 +44,6 @@ class ExperienceLevel(StrEnum):
     MIDDLE = "Middle"
     SENIOR = "Senior"
     LEAD = "Lead"
-
-    def __str__(self) -> str:
-        return self.value
 
 
 class Application(BaseModel):
@@ -124,6 +109,8 @@ class Skill(BaseModel):
 
 class User(BaseModel):
     username: str
+    image_uri: str = ""
+    cover_image_uri: str = ""
     education: list[Education] = Field(default_factory=list)
     skills: list[Skill] = Field(default_factory=list)
     experience: list[Experience] = Field(default_factory=list)
@@ -142,6 +129,10 @@ class User(BaseModel):
         self.preference = preference
 
 
+class Matched(BaseModel):
+    matched: bool = False
+
+
 class Account(BaseModel):
     username: str
     password: str
@@ -155,10 +146,6 @@ class Account(BaseModel):
             filter(lambda company: company.id == company_id, self.companies)
         )
         return len(filtered) > 0
-
-
-class SwipeList(BaseModel):
-    swipe_list: list[Application] | list[User] = Field(default_factory=list)
 
 
 class ApplicationId(BaseModel):
@@ -176,3 +163,22 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     username: str | None = None
+
+
+class Message(BaseModel):
+    sender_username: str
+    recipient_username: str
+    time: str
+    text: str
+    message_id: int = 0
+
+
+class Chat(BaseModel):
+    chat_id: int
+    username1: str
+    username2: str
+    message_list: list[Message] = Field(default_factory=list)
+
+
+class UserChats(BaseModel):
+    chats: list[Chat] = Field(default_factory=list)

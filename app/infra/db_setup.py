@@ -28,6 +28,8 @@ def create_tables(cursor: Cursor, connection: Connection) -> None:
     cursor.execute("DROP TABLE IF EXISTS company;")
     cursor.execute("DROP TABLE IF EXISTS application;")
     cursor.execute("DROP TABLE IF EXISTS swipe;")
+    cursor.execute("DROP TABLE IF EXISTS message;")
+    cursor.execute("DROP TABLE IF EXISTS chat;")
 
     cursor.execute(
         """
@@ -43,6 +45,8 @@ def create_tables(cursor: Cursor, connection: Connection) -> None:
         CREATE TABLE IF NOT EXISTS user(
             id INTEGER PRIMARY KEY,
             username TEXT NOT NULL,
+            image_uri TEXT,
+            cover_image_uri TEXT,
             education TEXT,
             skills TEXT,
             experience TEXT,
@@ -94,6 +98,34 @@ def create_tables(cursor: Cursor, connection: Connection) -> None:
             direction TEXT,
             FOREIGN KEY (username) REFERENCES user (username),
             FOREIGN KEY (application_id) REFERENCES application (id)
+        );
+        """
+    )
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS chat (
+            id INTEGER PRIMARY KEY,
+            username1 TEXT,
+            username2 TEXT,
+            FOREIGN KEY (username1) REFERENCES user (username),
+            FOREIGN KEY (username2) REFERENCES user (username)
+        );
+        """
+    )
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS message (
+            id INTEGER PRIMARY KEY,
+            sender_username TEXT,
+            recipient_username TEXT,
+            time TEXT,
+            text TEXT,
+            chat_id INTEGER,
+            FOREIGN KEY (sender_username) REFERENCES user (username),
+            FOREIGN KEY (recipient_username) REFERENCES user (username),
+            FOREIGN KEY (chat_id) REFERENCES chat (id)
         );
         """
     )
